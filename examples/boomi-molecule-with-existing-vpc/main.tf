@@ -30,27 +30,22 @@ module "vpc" {
 
 module boomi-eks-molecule {
     source = "../.."
-    aws_profile = "boomi-runtime-sandbox-admin"
-    bastion_key_name = aws_key_pair.bastion_key.key_name
-
-    vpcCidr = "10.0.0.0/16"
-    availabilityZones = module.vpc.azs
-    private_subnets = []
-    public_subnets = []
-    bastion_ami_id = "ami-07dfed28fcf95241c"
+    bastion_key_name = aws_key_pair.bastion_key.key_name   
     
-    cluster_version = "1.26"
-    boomi_script_location = "../../"
+    boomi_script_location = "../../" 
+
     BoomiUsername = var.BoomiUsername
     BoomiAccountID = var.BoomiAccountID
     BoomiMFAInstallToken = var.BoomiMFAInstallToken
     BoomiPassword = ""
+    aws_profile = var.aws_profile
 
     create_new_vpc = false
-    existing_vpcId = module.vpc.vpc_id
-    existing_private_subnetsIds = module.vpc.private_subnets
+    existing_vpcId = "vpc-04cb528782575c615"
+    existing_private_subnetsIds = ["subnet-0fc5e58ba8a5a7a87","subnet-0abfd7a4089b04060","subnet-07835580a24d2cc58","subnet-05be978b816a530fc"]
     bastion_security_group_id = ""
-    existing_public_subnetsIds = module.vpc.public_subnets  
+    existing_public_subnetsIds = ["subnet-0557d0ada982c2fec","subnet-064f712e8abe5984a","subnet-001e92616bb19a8c6","subnet-05b2ab646feefe9d4"] 
+    availabilityZones = ["us-west-2a", "us-west-2b", "us-west-2c","us-west-2d"]
 
-    cluster_endpoint_public_access_cidrs = ["3.109.64.63/32"]
+    cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 }
