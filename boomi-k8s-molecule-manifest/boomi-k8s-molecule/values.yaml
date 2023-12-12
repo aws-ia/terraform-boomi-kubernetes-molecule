@@ -1,0 +1,9 @@
+InstallTokenProvided: true
+ApplicationLoadBalancer: true
+MoleculeClusterName:
+BoomiUsername:
+BoomiPassword:
+BoomiAccountID: 
+BoomiMFAInstallToken:
+EFSId: 
+basePath:
