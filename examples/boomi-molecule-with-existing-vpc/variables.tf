@@ -1,5 +1,5 @@
 ############### Infra Variables #################
-variable deploymentName {
+variable deployment_name {
     type = string
     default = "boomi-eks-blueprint"
 }
@@ -13,12 +13,12 @@ variable aws_profile {
 
 ############### Boomi Account Variables #################
 
-variable BoomiUsername {
+variable boomi_username {
     type = string
 }
-variable BoomiAccountID {
+variable boomi_account_id {
     type = string
 }
-variable BoomiMFAInstallToken {
+variable boomi_install_token {
     type = string
 }

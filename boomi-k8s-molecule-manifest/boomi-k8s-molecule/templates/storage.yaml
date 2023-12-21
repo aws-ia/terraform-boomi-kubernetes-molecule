@@ -6,6 +6,6 @@ provisioner: "efs.csi.aws.com"
 mountOptions: ["tls","iam"]
 parameters:
   provisioningMode : "efs-ap"
-  fileSystemId : {{ quote .Values.EFSId }}
+  fileSystemId : {{ quote .Values.efs_id }}
   directoryPerms : "700"
-  basePath : /{{ .Values.basePath }}
+  basePath : /{{ .Values.base_path }}

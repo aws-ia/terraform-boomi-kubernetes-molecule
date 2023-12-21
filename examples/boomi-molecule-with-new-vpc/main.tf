@@ -5,26 +5,27 @@ resource "aws_key_pair" "bastion_key" {
 
 module boomi-eks-molecule {
     source = "../.."
-    aws_profile = "boomi-runtime-sandbox-admin"
+
+    boomi_script_location = "../../"
+
+    aws_profile = var.aws_profile
     bastion_key_name = aws_key_pair.bastion_key.key_name
 
-    vpcCidr = "10.0.0.0/16"
-    availabilityZones = ["us-west-2a", "us-west-2b", "us-west-2c","us-west-2d"]
+    vpc_cidr = "10.0.0.0/16"
+    availability_zones = ["us-west-2a", "us-west-2b", "us-west-2c","us-west-2d"]
     private_subnets = ["10.0.0.0/19","10.0.32.0/19","10.0.64.0/19","10.0.96.0/19"]
     public_subnets = ["10.0.128.0/20","10.0.144.0/20","10.0.160.0/20","10.0.224.0/19"]
-    bastion_ami_id = "ami-07dfed28fcf95241c"
-    create_new_vpc = true
-    cluster_version = "1.26"
-    boomi_script_location = "../../"
-    BoomiUsername = var.BoomiUsername
-    BoomiAccountID = var.BoomiAccountID
-    BoomiMFAInstallToken = var.BoomiMFAInstallToken
-    BoomiPassword = ""
-    cluster_endpoint_public_access_cidrs = ["3.109.64.63/32"]
 
-    existing_vpcId = ""
-    existing_private_subnetsIds = []
+    create_new_vpc = true
+    
+    boomi_username = var.boomi_username
+    boomi_account_id = var.boomi_account_id
+    boomi_install_token = var.boomi_install_token
+    boomi_password = ""
+
+    existing_vpc_id = ""
+    existing_private_subnets_ids = []
     bastion_security_group_id = ""
-    existing_public_subnetsIds = []
+    existing_public_subnets_ids = []
     
 }

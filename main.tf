@@ -3,25 +3,26 @@ data "aws_eks_cluster_auth" "this" {
 }
 
 data "aws_subnet" "aws_private_subnet_cidr" {
-  for_each = var.create_new_vpc ? [] : "${toset(var.existing_private_subnetsIds)}"
+  for_each = var.create_new_vpc ? [] : "${toset(var.existing_private_subnets_ids)}"
   id       = "${each.value}"
 }
 
 locals {
-  name   = var.deploymentName
+  name   = var.deployment_name
   tags = {
     Name  = local.name
     Type = "EKS Blueprint Terraform"
+    BoomiContact = "eks-quickstart"
   }
 
-  Username = var.BoomiMFAInstallToken != " " ? "BOOMI_TOKEN.${var.BoomiUsername}" : var.BoomiUsername
-  Password = var.BoomiMFAInstallToken != " " ? var.BoomiMFAInstallToken : var.BoomiPassword
-  TokenType =  "Molecule"
-  TokenTimeout = 90  
+  username = var.boomi_install_token != " " ? "BOOMI_TOKEN.${var.boomi_username}" : var.boomi_username
+  password = var.boomi_install_token != " " ? var.boomi_install_token : var.boomi_password
+  token_type =  "Molecule"
+  token_timeout = 90  
 
-  vpc_id     = var.create_new_vpc ? module.vpc.vpc_id : var.existing_vpcId
-  private_subnet_ids = var.create_new_vpc ? module.vpc.private_subnets : var.existing_private_subnetsIds
-  public_subnet_ids = var.create_new_vpc ? module.vpc.public_subnets : var.existing_public_subnetsIds 
+  vpc_id     = var.create_new_vpc ? module.vpc.vpc_id : var.existing_vpc_id
+  private_subnet_ids = var.create_new_vpc ? module.vpc.private_subnets : var.existing_private_subnets_ids
+  public_subnet_ids = var.create_new_vpc ? module.vpc.public_subnets : var.existing_public_subnets_ids
   private_subnet_cidrs  = var.create_new_vpc ? var.private_subnets : values(data.aws_subnet.aws_private_subnet_cidr).*.cidr_block  
   bastion_security_group_id = var.create_new_vpc ? module.bastion-sg.security_group_id : var.bastion_security_group_id
 }
@@ -36,13 +37,10 @@ module "lambda_function" {
   function_name = "boomi-license-validation"
   description   = "Verifies account has available molecule licenses"
   handler       = "lambda_function.lambda_handler"
-  runtime       = "python3.7"
+  runtime       = "python3.9"
+  tracing_mode = "Active"
 
-  build_in_docker   = true
-  docker_file       = "${var.boomi_script_location}boomi-license-validation/src/Dockerfile"
-  docker_build_root = "${var.boomi_script_location}boomi-license-validation/src/"
-  docker_image      = "${var.boomi_script_location}boomi-license-validation-build"
-  source_path = "${var.boomi_script_location}boomi-license-validation/src/"
+  source_path = "${path.module}/boomi-license-validation/"
 }
 
 data "aws_lambda_invocation" "boomi-license-validation" {
@@ -51,11 +49,11 @@ data "aws_lambda_invocation" "boomi-license-validation" {
   input = <<JSON
   {
     "ResourceProperties": {
-      "BoomiUsername": "${local.Username}",
-      "BoomiPassword": "${local.Password}",
-      "BoomiAccountID": "${var.BoomiAccountID}",
-      "TokenType": "${local.TokenType}",
-      "TokenTimeout": "${local.TokenTimeout}"
+      "BoomiUsername": "${local.username}",
+      "BoomiPassword": "${local.password}",
+      "BoomiAccountID": "${var.boomi_account_id}",
+      "TokenType": "${local.token_type}",
+      "TokenTimeout": "${local.token_timeout}"
     }
   }
   JSON
@@ -76,7 +74,7 @@ module "eks" {
   cluster_version                = var.cluster_version
   cluster_endpoint_public_access = true
 
-  cluster_endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
+  cluster_endpoint_public_access_cidrs = [ var.cluster_endpoint_public_access_cidrs ]
 
   vpc_id = local.vpc_id
   control_plane_subnet_ids = concat(local.private_subnet_ids,local.public_subnet_ids)
@@ -160,7 +158,7 @@ module "efs" {
 
   # Mount targets / security group
   mount_targets = {
-    for k, v in zipmap(var.availabilityZones, local.private_subnet_ids) : k => { subnet_id = v }
+    for k, v in zipmap(var.availability_zones, local.private_subnet_ids) : k => { subnet_id = v }
   }
   security_group_description = "${local.name} EFS security group"
   security_group_vpc_id      = local.vpc_id
@@ -185,7 +183,7 @@ module "bastion-sg" {
 
   name        = "eks-blueprint-bastion-sg"
   description = "Security group for Bastion Host - EKS Blueprint"
-  vpc_id      = var.create_new_vpc ? module.vpc.vpc_id : var.existing_vpcId
+  vpc_id      = var.create_new_vpc ? module.vpc.vpc_id : var.existing_vpc_id
 
   ingress_with_cidr_blocks = [
     {
@@ -193,14 +191,14 @@ module "bastion-sg" {
       to_port     = 22
       protocol    = "tcp"
       description = "SSH Port"
-      cidr_blocks = "0.0.0.0/0"
+      cidr_blocks = var.bastion_remote_access_cidr
     },
     {
       from_port   = -1
       to_port     = -1
       protocol    = "icmp"
       description = "SSH Port"
-      cidr_blocks = "0.0.0.0/0"
+      cidr_blocks = var.bastion_remote_access_cidr
     },
   ]
 
@@ -262,6 +260,8 @@ module "asg" {
   launch_template_name        = "BastionHost-for-eks-blueprint"
   launch_template_description = "BastionHost-for-eks-blueprint"
   update_default_version      = true
+
+  autoscaling_group_tags = local.tags
 
   key_name = var.bastion_key_name
 
@@ -325,14 +325,14 @@ module "asg" {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 4.0"
+  version = "~> 5.4.0"
 
   name = local.name
-  cidr = var.vpcCidr
+  cidr = var.vpc_cidr
 
   create_vpc = var.create_new_vpc
 
-  azs = var.availabilityZones
+  azs = var.availability_zones
   private_subnets = var.private_subnets
   public_subnets  = var.public_subnets
 
@@ -368,23 +368,23 @@ resource "helm_release" "boomi_molecule" {
     value = "k8s-boomi-molecule"
   }
   set {
-    name = "BoomiUsername"
-    value = var.BoomiUsername
+    name = "boomi_username"
+    value = var.boomi_username
   }
   set {
-    name = "BoomiAccountID"
-    value = var.BoomiAccountID
+    name = "boomi_account_id"
+    value = var.boomi_account_id
   }
   set {
-     name = "BoomiMFAInstallToken"
+     name = "boomi_mfa_install_token"
      value = jsondecode(data.aws_lambda_invocation.boomi-license-validation.result)["token"]
   }
   set {
-     name = "EFSId"
+     name = "efs_id"
      value = module.efs.id
   }
   set {
-     name = "basePath"
+     name = "base_path"
      value = local.name
   }
 }

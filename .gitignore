@@ -40,3 +40,7 @@ terraform.rc
 
 go.mod
 go.sum
+
+# Ignore build in examples
+
+examples/**/builds/*.*

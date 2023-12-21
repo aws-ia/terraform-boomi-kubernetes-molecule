@@ -1,17 +1,20 @@
 ############### Infra Variables #################
-variable deploymentName {
+variable deployment_name {
+    description = "Deployment Name for the boomi terraform deployment"
     type = string
     default = "boomi-eks-blueprint"
 }
 variable region {
+    description = "Region for the EKS deployment"
     type = string
     default = "us-west-2"
 }
 variable aws_profile {
+    description = "AWS profile for the deployment, if needed"
     type = string
 }
 
-variable vpcCidr {
+variable vpc_cidr{
     type = string
     default = "10.0.0.0/16"
 }
@@ -21,7 +24,7 @@ variable boomi_script_location {
     default = ""
 }
 
-variable availabilityZones {
+variable availability_zones {
     type = list
     default = ["us-west-2a", "us-west-2b", "us-west-2c","us-west-2d"]
 }
@@ -46,8 +49,13 @@ variable bastion_ami_id {
 }
 
 variable cluster_endpoint_public_access_cidrs{
-    type = list
-    default = ["0.0.0.0/0"]
+    type = string
+    default = "0.0.0.0/0"
+}
+
+variable bastion_remote_access_cidr{
+    type = string
+    default = "0.0.0.0/0"
 }
 
 variable "create_new_vpc" {
@@ -56,15 +64,15 @@ variable "create_new_vpc" {
   type   = bool
 }
 
-variable existing_vpcId {
+variable existing_vpc_id {
     type = string
 }
 
-variable existing_private_subnetsIds {
+variable existing_private_subnets_ids {
     type = list  
 }
 
-variable existing_public_subnetsIds {
+variable existing_public_subnets_ids {
     type = list
 }
 
@@ -93,15 +101,15 @@ variable "kubectl_version" {
 
 ############### Boomi Account Variables #################
 
-variable BoomiUsername {
+variable boomi_username {
     type = string
 }
-variable BoomiAccountID {
+variable boomi_account_id {
     type = string
 }
-variable BoomiMFAInstallToken {
+variable boomi_install_token {
     type = string
 }
-variable BoomiPassword {
+variable boomi_password {
     type = string
 }
