@@ -3,8 +3,8 @@ data "aws_eks_cluster_auth" "this" {
 }
 
 data "aws_subnet" "aws_private_subnet_cidr" {
-  for_each = var.create_new_vpc ? [] : "${toset(var.existing_private_subnets_ids)}"
-  id       = "${each.value}"
+  for_each = var.create_new_vpc ? [] : toset(var.existing_private_subnets_ids)
+  id       = each.value
 }
 
 locals {
@@ -23,7 +23,7 @@ locals {
   vpc_id     = var.create_new_vpc ? module.vpc.vpc_id : var.existing_vpc_id
   private_subnet_ids = var.create_new_vpc ? module.vpc.private_subnets : var.existing_private_subnets_ids
   public_subnet_ids = var.create_new_vpc ? module.vpc.public_subnets : var.existing_public_subnets_ids
-  private_subnet_cidrs  = var.create_new_vpc ? var.private_subnets : values(data.aws_subnet.aws_private_subnet_cidr).*.cidr_block  
+  private_subnet_cidrs  = var.create_new_vpc ? var.private_subnets : values(data.aws_subnet.aws_private_subnet_cidr)[*].cidr_block  
   bastion_security_group_id = var.create_new_vpc ? module.bastion-sg.security_group_id : var.bastion_security_group_id
 }
 
@@ -31,9 +31,14 @@ locals {
 # Boomi License validation
 ################################################################################
 
+resource "aws_kms_key" "lambda_kms_key" {
+  description             = "KMS key for EKS Blueprint Lambda validation function"
+  deletion_window_in_days = 10
+}
+
 module "lambda_function" {
   source = "terraform-aws-modules/lambda/aws"
-
+  version = "6.5.0"
   function_name = "boomi-license-validation"
   description   = "Verifies account has available molecule licenses"
   handler       = "lambda_function.lambda_handler"
@@ -41,6 +46,10 @@ module "lambda_function" {
   tracing_mode = "Active"
 
   source_path = "${path.module}/boomi-license-validation/"
+  
+  use_existing_cloudwatch_log_group = false
+  cloudwatch_logs_kms_key_id = aws_kms_key.lambda_kms_key.arn
+  vpc_subnet_ids = local.private_subnet_ids
 }
 
 data "aws_lambda_invocation" "boomi-license-validation" {
@@ -180,7 +189,7 @@ module "efs" {
 
 module "bastion-sg" {
   source = "terraform-aws-modules/security-group/aws"
-
+  version = "~> 5.1.0"
   name        = "eks-blueprint-bastion-sg"
   description = "Security group for Bastion Host - EKS Blueprint"
   vpc_id      = var.create_new_vpc ? module.vpc.vpc_id : var.existing_vpc_id
@@ -242,7 +251,7 @@ resource "aws_iam_policy" "BastionHostPolicy" {
 
 module "asg" {
   source  = "terraform-aws-modules/autoscaling/aws"
-
+  version = "~>7.3.1"
   # Autoscaling group
   name = "BastionHost-for-eks-blueprint"
 
@@ -270,7 +279,7 @@ module "asg" {
   ebs_optimized     = true
   enable_monitoring = true
 
-  user_data = "${base64encode(templatefile("${path.module}/boomi-userdata-scripts/userDataScript.sh", { region = var.region, cluster_name = local.name,kubectl_version =  lookup (var.kubectl_version,"${var.cluster_version}") }))}"
+  user_data = base64encode(templatefile("${path.module}/boomi-userdata-scripts/userDataScript.sh", { region = var.region, cluster_name = local.name,kubectl_version =  var.kubectl_version[var.cluster_version] }))
 
   # IAM role & instance profile
   create_iam_instance_profile = var.create_new_vpc ? true : false
@@ -281,6 +290,11 @@ module "asg" {
     CloudWatchAgentServerPolicy = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
     AmazonEC2RoleforSSM = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
     BastionHostPolicy = aws_iam_policy.BastionHostPolicy.arn
+  }
+
+  metadata_options = {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
   }
 
   block_device_mappings = [
@@ -317,6 +331,12 @@ module "asg" {
   ]
   
   tags = local.tags
+  tag_specifications = [ 
+    {
+      resource_type = "instance"
+      tags          = local.tags
+    }
+  ]
 }
 
 ################################################################################
@@ -356,8 +376,8 @@ module "vpc" {
 
 resource "helm_release" "boomi_molecule" {
   name       = "boomi-atom"
-
-  repository = "${var.boomi_script_location}boomi-k8s-molecule-manifest"
+  repository = "s3://terraform-boomi-kubernetes-molecule-test/charts"
+  #repository = "${var.boomi_script_location}boomi-k8s-molecule-manifest"
   chart      = "boomi-k8s-molecule"
   namespace = "eks-boomi-molecule"
   create_namespace = "true"
@@ -388,3 +408,4 @@ resource "helm_release" "boomi_molecule" {
      value = local.name
   }
 }
+

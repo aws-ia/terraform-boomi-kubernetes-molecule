@@ -1,8 +1,3 @@
-resource "aws_key_pair" "bastion_key" {
-  key_name   = var.deployment_name
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD3F6tyPEFEzV0LX3X8BsXdMsQz1x2cEikKDEY0aIj41qgxMCP/iteneqXSIFZBp5vizPvaoIR3Um9xK7PGoW8giupGn+EPuxIA4cDM4vzOqOkiMPhz5XK0whEjkVzTo4+S0puvDZuwIsdiW9mxhJc7tgBNL0cYlWSYVkz4G/fslNfRPW5mYAM49f4fhtxPb5ok4Q2Lg9dPKVHO/Bgeu5woMc7RY0p1ej6D4CKFE6lymSDJpW0YHX/wqE9+cfEauh7xZcG0q9t2ta6F6fmX0agvpFyZo8aFbXeUBr7osSCJNgvavWbM/06niWrOvYX2xwWdhXmXSrbX8ZbabVohBK41 email@example.com"
-}
-
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 4.0"
@@ -30,7 +25,7 @@ module "vpc" {
 
 module boomi-eks-molecule {
     source = "../.."
-    bastion_key_name = aws_key_pair.bastion_key.key_name   
+    bastion_key_name = ""
     
     boomi_script_location = "../../" 
 
@@ -41,9 +36,9 @@ module boomi-eks-molecule {
     aws_profile = var.aws_profile
 
     create_new_vpc = false
-    existing_vpc_id = ""
-    existing_private_subnets_ids = []
-    existing_public_subnets_ids = [] 
-    availability_zones = []
+    existing_vpc_id = module.vpc.vpc_id
+    existing_private_subnets_ids = module.vpc.private_subnets
+    existing_public_subnets_ids = module.vpc.public_subnets
+    availability_zones = module.vpc.azs
     bastion_security_group_id = ""
 }

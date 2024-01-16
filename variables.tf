@@ -1,59 +1,68 @@
 ############### Infra Variables #################
 variable deployment_name {
-    description = "Deployment Name for the boomi terraform deployment"
+    description = "Deployment Name for the boomi terraform deployment."
     type = string
     default = "boomi-eks-blueprint"
 }
 variable region {
-    description = "Region for the EKS deployment"
+    description = "Region for the EKS deployment."
     type = string
     default = "us-west-2"
 }
 variable aws_profile {
-    description = "AWS profile for the deployment, if needed"
+    description = "AWS profile for the deployment."
     type = string
 }
 
-variable vpc_cidr{
+variable vpc_cidr {
+    description = "The IPv4 CIDR block for the VPC."
     type = string
     default = "10.0.0.0/16"
 }
 
 variable boomi_script_location {
+    description = ""
     type = string
     default = ""
 }
 
 variable availability_zones {
+    description = "A list of availability zones names"
     type = list
     default = ["us-west-2a", "us-west-2b", "us-west-2c","us-west-2d"]
 }
 
 variable private_subnets {
+    description = "A list of private subnets CIDR range"
     type = list
     default = ["10.0.0.0/19","10.0.32.0/19","10.0.64.0/19","10.0.96.0/19"]
 }
 
 variable public_subnets {
+    description = "A list of public subnets CIDR range"
     type = list
     default = ["10.0.128.0/20","10.0.144.0/20","10.0.160.0/20","10.0.224.0/19"]
 }
 
 variable bastion_key_name {
+    description = "EC2 Keypair Name for Bastion Host"
     type = string
 }
 
 variable bastion_ami_id {
+    description = "AMI ID for Bastion Host"
     type = string
     default = "ami-07dfed28fcf95241c"
 }
 
 variable cluster_endpoint_public_access_cidrs{
+    description = "CIDR Range for EKS public access"
     type = string
     default = "0.0.0.0/0"
 }
 
 variable bastion_remote_access_cidr{
+    description = "CIDR Range for bastion Host"
     type = string
     default = "0.0.0.0/0"
 }
@@ -65,18 +74,22 @@ variable "create_new_vpc" {
 }
 
 variable existing_vpc_id {
+    description = "VPC ID for existing VPC"
     type = string
 }
 
 variable existing_private_subnets_ids {
+    description = "List of private subnet ids"
     type = list  
 }
 
 variable existing_public_subnets_ids {
+    description = "List of public subnet ids"
     type = list
 }
 
 variable bastion_security_group_id {
+    description = "Security Group ID of bastion host. This will be added to EKS for access from Bastion Host."
     type = string
 }
 
@@ -84,6 +97,7 @@ variable bastion_security_group_id {
 variable cluster_version {
     type = string
     default = "1.26"
+    description = "EKS Cluster Version"
     validation {
         condition     = contains(["1.25", "1.26","1.27"], var.cluster_version)
         error_message = "Valid values for var: cluster_version are (1.25, 1.26,1.27)."
@@ -102,14 +116,18 @@ variable "kubectl_version" {
 ############### Boomi Account Variables #################
 
 variable boomi_username {
+    description = "Boomi Username"
     type = string
 }
 variable boomi_account_id {
+    description = "Boomi Account ID"
     type = string
 }
 variable boomi_install_token {
+    description = "Boomi AtomSphere API Tokens"
     type = string
 }
 variable boomi_password {
+    description = "Boomi Password, this is not needed when boomi_install_token is provided."
     type = string
 }
