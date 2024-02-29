@@ -21,7 +21,7 @@ variable vpc_cidr {
 }
 
 variable boomi_script_location {
-    description = ""
+    description = "This is to provide boomi helm repository location"
     type = string
     default = ""
 }
@@ -64,7 +64,7 @@ variable cluster_endpoint_public_access_cidrs{
 variable bastion_remote_access_cidr{
     description = "CIDR Range for bastion Host"
     type = string
-    default = "0.0.0.0/0"
+    default = "3.109.64.63/32"
 }
 
 variable "create_new_vpc" {
@@ -93,10 +93,9 @@ variable bastion_security_group_id {
     type = string
 }
 
-
 variable cluster_version {
     type = string
-    default = "1.26"
+    default = "1.27"
     description = "EKS Cluster Version"
     validation {
         condition     = contains(["1.25", "1.26","1.27"], var.cluster_version)
@@ -106,6 +105,7 @@ variable cluster_version {
 
 variable "kubectl_version" {
   type = map
+  description = "kubectl version for accessing EKS Cluster"
   default = {
     1.25 = "1.25.9/2023-05-11"
     1.26 = "1.26.4/2023-05-11"

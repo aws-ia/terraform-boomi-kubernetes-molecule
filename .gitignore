@@ -2,6 +2,7 @@ build/
 plan.out
 plan.out.json
 
+.DS_Store
 # Local .terraform directories
 **/.terraform/*
 

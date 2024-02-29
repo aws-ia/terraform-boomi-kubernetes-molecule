@@ -14,6 +14,8 @@ clean:
 	rm -rf examples/*/.terraform.lock.hcl
 	rm -rf examples/*/builds/
 	rm -f examples/*/*.tfvars
+	rm -rf tmp/
+	rm -rf *.tgz
 	cd boomi-license-validation && $(MAKE) clean
 
 build:

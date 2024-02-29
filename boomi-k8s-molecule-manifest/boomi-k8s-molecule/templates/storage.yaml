@@ -8,4 +8,4 @@ parameters:
   provisioningMode : "efs-ap"
   fileSystemId : {{ quote .Values.efs_id }}
   directoryPerms : "700"
-  basePath : /{{ .Values.base_path }}
+  basePath : /

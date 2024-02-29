@@ -7,6 +7,8 @@ data "aws_subnet" "aws_private_subnet_cidr" {
   id       = each.value
 }
 
+data "aws_caller_identity" "current" {}
+
 locals {
   name   = var.deployment_name
   tags = {
@@ -22,24 +24,61 @@ locals {
 
   vpc_id     = var.create_new_vpc ? module.vpc.vpc_id : var.existing_vpc_id
   private_subnet_ids = var.create_new_vpc ? module.vpc.private_subnets : var.existing_private_subnets_ids
-  public_subnet_ids = var.create_new_vpc ? module.vpc.public_subnets : var.existing_public_subnets_ids
+  #public_subnet_ids = var.create_new_vpc ? module.vpc.public_subnets : var.existing_public_subnets_ids
   private_subnet_cidrs  = var.create_new_vpc ? var.private_subnets : values(data.aws_subnet.aws_private_subnet_cidr)[*].cidr_block  
-  bastion_security_group_id = var.create_new_vpc ? module.bastion-sg.security_group_id : var.bastion_security_group_id
+  bastion_security_group_id = var.create_new_vpc ? module.bastion_sg.security_group_id : var.bastion_security_group_id
+
+  account_id = data.aws_caller_identity.current.account_id
 }
 
 ################################################################################
 # Boomi License validation
 ################################################################################
 
+data "aws_iam_policy_document" "lambda_cloudwatchlogs_kms_policy" {
+  statement {
+    sid    = "Enable IAM User Permissions"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${local.account_id}:root"]
+    }
+
+    actions = [
+      "kms:*"
+    ]
+    resources = ["*"]
+  }
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["logs.${var.region}.amazonaws.com"]
+    }
+    actions = [
+      "kms:Encrypt*",
+      "kms:Decrypt*",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:Describe*"
+    ]
+
+    resources = ["*"]
+  }
+}
+
 resource "aws_kms_key" "lambda_kms_key" {
   description             = "KMS key for EKS Blueprint Lambda validation function"
   deletion_window_in_days = 10
+  policy = data.aws_iam_policy_document.lambda_cloudwatchlogs_kms_policy.json
+  enable_key_rotation = true
 }
 
 module "lambda_function" {
   source = "terraform-aws-modules/lambda/aws"
   version = "6.5.0"
-  function_name = "boomi-license-validation"
+  function_name = "boomi_license_validation"
   description   = "Verifies account has available molecule licenses"
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.9"
@@ -47,13 +86,12 @@ module "lambda_function" {
 
   source_path = "${path.module}/boomi-license-validation/"
   
-  use_existing_cloudwatch_log_group = false
   cloudwatch_logs_kms_key_id = aws_kms_key.lambda_kms_key.arn
   vpc_subnet_ids = local.private_subnet_ids
 }
 
-data "aws_lambda_invocation" "boomi-license-validation" {
-  function_name = "boomi-license-validation"
+data "aws_lambda_invocation" "boomi_license_validation" {
+  function_name = "boomi_license_validation"
   depends_on = [module.lambda_function]
   input = <<JSON
   {
@@ -68,28 +106,47 @@ data "aws_lambda_invocation" "boomi-license-validation" {
   JSON
 }
 
+#tfsec:ignore:aws-iam-no-policy-wildcards
+resource "aws_iam_policy" "efs_driver_policy" {
+    name  = "${local.name}-efs-driver-policy"
+    policy = "${file("aws-policy.json")}"
+}
 
-################################################################################
-# EKS Cluster
-################################################################################
+resource "aws_iam_role" "efs_driver_role" {
+  name               = "${local.name}-efs-driver-role"
+  managed_policy_arns = [aws_iam_policy.efs_driver_policy.arn]
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        "Effect": "Allow",
+			  "Principal": {
+				  "Federated": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${module.eks.oidc_provider}"
+			  },
+			  "Action": "sts:AssumeRoleWithWebIdentity",
+        "Condition": {
+          "StringLike": {
+            "${module.eks.oidc_provider}:sub": "system:serviceaccount:kube-system:efs-csi-*",
+            "${module.eks.oidc_provider}:aud": "sts.amazonaws.com"
+          }
+			  }
+      },
+    ]
+  })
+}
 
 #tfsec:ignore:aws-eks-enable-control-plane-logging
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 19.12"
-  #depends_on = [module.lambda_function_existing_package_s3]
+  version = "~> 20.0"
 
   cluster_name                   = local.name
   cluster_version                = var.cluster_version
-  cluster_endpoint_public_access = true
-
-  cluster_endpoint_public_access_cidrs = [ var.cluster_endpoint_public_access_cidrs ]
 
   vpc_id = local.vpc_id
-  control_plane_subnet_ids = concat(local.private_subnet_ids,local.public_subnet_ids)
+  control_plane_subnet_ids = concat(local.private_subnet_ids)
   subnet_ids = local.private_subnet_ids
 
-  manage_aws_auth_configmap = true
   cluster_security_group_additional_rules = {
     inress_ec2_tcp = {
       description                = "Access EKS from Bastion Host"
@@ -101,13 +158,24 @@ module "eks" {
     }
   }
 
-  aws_auth_roles = [
-    {
-      rolearn  = module.asg.iam_role_arn
-      username = module.asg.iam_role_arn
-      groups   = ["system:masters"]
+  enable_cluster_creator_admin_permissions = true
+  authentication_mode = "API_AND_CONFIG_MAP"
+
+  access_entries = {
+    bastion_host = {
+      kubernetes_groups = []
+      principal_arn     = module.asg.iam_role_arn
+
+      policy_associations = {
+        cluster_admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type       = "cluster"
+          }
+        }
+      }
     }
-  ]
+  }
 
   eks_managed_node_groups = {
     initial = {
@@ -119,43 +187,18 @@ module "eks" {
     }
   }
 
-  tags = local.tags
-}
-
-################################################################################
-# Kubernetes Addons
-################################################################################
-
-module "eks_blueprints_addons" {
-  source = "aws-ia/eks-blueprints-addons/aws"
-  version = "~> 1.0"
-
-  cluster_name       = module.eks.cluster_name
-  cluster_endpoint   = module.eks.cluster_endpoint
-  oidc_provider_arn  = module.eks.oidc_provider_arn
-  cluster_version    = module.eks.cluster_version
-
-  eks_addons = {
-    coredns    = {
+  cluster_addons = {
+    coredns = {
       most_recent = true
     }
     kube-proxy = {
       most_recent = true
     }
-    vpc-cni    = {
+    vpc-cni = {
       most_recent = true
     }
   }
-
-  enable_aws_efs_csi_driver = true
-  enable_metrics_server     = true  
-  enable_aws_load_balancer_controller = true 
-  enable_cluster_autoscaler = true
   tags = local.tags
-
-  depends_on = [
-    module.eks
-  ]
 }
 
 module "efs" {
@@ -182,12 +225,8 @@ module "efs" {
   tags = local.tags
 }
 
-
-################################################################################
-# Bastion Stack
-################################################################################
-
-module "bastion-sg" {
+#tfsec:ignore:aws-ec2-no-public-egress-sgr
+module "bastion_sg" {
   source = "terraform-aws-modules/security-group/aws"
   version = "~> 5.1.0"
   name        = "eks-blueprint-bastion-sg"
@@ -200,14 +239,14 @@ module "bastion-sg" {
       to_port     = 22
       protocol    = "tcp"
       description = "SSH Port"
-      cidr_blocks = var.bastion_remote_access_cidr
+      cidr_blocks = "0.0.0.0/0"
     },
     {
       from_port   = -1
       to_port     = -1
       protocol    = "icmp"
       description = "SSH Port"
-      cidr_blocks = var.bastion_remote_access_cidr
+      cidr_blocks = "0.0.0.0/0"
     },
   ]
 
@@ -225,8 +264,9 @@ module "bastion-sg" {
   ]
 }
 
-resource "aws_iam_policy" "BastionHostPolicy" {
-  name        = "BastionHostPolicy"
+#tfsec:ignore:aws-iam-no-policy-wildcards
+resource "aws_iam_policy" "bastion_host_policy" {
+  name        = "bastion_host_policy"
   description = "IAM Policy for Bastion Host EKS access"
 
   policy = jsonencode({
@@ -237,16 +277,67 @@ resource "aws_iam_policy" "BastionHostPolicy" {
             "eks:DescribeCluster",
             "eks:DescribeUpdate",
             "eks:ListUpdates",
-            "eks:UpdateClusterVersion"
+            "eks:UpdateClusterVersion",
+            "eks:CreateAddon"
         ]
         Effect   = "Allow"
-        Resource = module.eks.cluster_arn
+        Resource = "*"
       },
     ]
   })
   depends_on = [
     module.eks
   ]
+}
+
+#tfsec:ignore:aws-s3-enable-bucket-logging
+module "s3_bucket" {
+  source = "terraform-aws-modules/s3-bucket/aws"
+
+  bucket = "${local.name}-artifact-bucket"
+  acl    = "private"
+
+  control_object_ownership = true
+  object_ownership         = "ObjectWriter"
+
+  versioning = {
+    enabled = true
+  }
+  server_side_encryption_configuration = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm     = "AES256"
+      }
+    }
+  }
+}
+
+resource "tls_private_key" "bastion_sshkey" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "bastion_host_keypair" {
+  key_name   = "${local.name}-keypair-${var.region}"
+  public_key = tls_private_key.bastion_sshkey.public_key_openssh
+
+  tags = local.tags
+}
+
+resource "aws_s3_object" "bastion_host_keypair" {
+  bucket  = "${local.name}-artifact-bucket"
+  key     = "${local.name}-keypair-${var.region}"
+  content = tls_private_key.bastion_sshkey.private_key_pem
+  etag = md5(tls_private_key.bastion_sshkey.private_key_pem)
+  depends_on = [module.s3_bucket]
+}
+
+resource "aws_s3_object" "boomi-molecule" {
+  bucket  = "${local.name}-artifact-bucket"
+  key     = "${local.name}-boomi-k8s-molecule"
+  source = "boomi-k8s-molecule-0.1.0.tgz"
+  etag = md5(tls_private_key.bastion_sshkey.private_key_pem)
+  depends_on = [module.s3_bucket]
 }
 
 module "asg" {
@@ -272,7 +363,7 @@ module "asg" {
 
   autoscaling_group_tags = local.tags
 
-  key_name = var.bastion_key_name
+  key_name = "${local.name}-keypair-${var.region}"
 
   image_id          = var.bastion_ami_id
   instance_type     = "t3.micro"
@@ -289,7 +380,7 @@ module "asg" {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
     CloudWatchAgentServerPolicy = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
     AmazonEC2RoleforSSM = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
-    BastionHostPolicy = aws_iam_policy.BastionHostPolicy.arn
+    BastionHostPolicy = aws_iam_policy.bastion_host_policy.arn
   }
 
   metadata_options = {
@@ -326,7 +417,7 @@ module "asg" {
       delete_on_termination = true
       description           = "eth0"
       device_index          = 0
-      security_groups       = [module.bastion-sg.security_group_id]
+      security_groups       = [module.bastion_sg.security_group_id]
     }
   ]
   
@@ -338,10 +429,6 @@ module "asg" {
     }
   ]
 }
-
-################################################################################
-# VPC Resources
-################################################################################
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
@@ -369,43 +456,3 @@ module "vpc" {
 
   tags = local.tags
 }
-
-################################################################################
-# Boomi Manifest
-################################################################################
-
-resource "helm_release" "boomi_molecule" {
-  name       = "boomi-atom"
-  repository = "s3://terraform-boomi-kubernetes-molecule-test/charts"
-  #repository = "${var.boomi_script_location}boomi-k8s-molecule-manifest"
-  chart      = "boomi-k8s-molecule"
-  namespace = "eks-boomi-molecule"
-  create_namespace = "true"
-  timeout = 360
-
-  set {
-    name = "MoleculeClusterName"
-    value = "k8s-boomi-molecule"
-  }
-  set {
-    name = "boomi_username"
-    value = var.boomi_username
-  }
-  set {
-    name = "boomi_account_id"
-    value = var.boomi_account_id
-  }
-  set {
-     name = "boomi_mfa_install_token"
-     value = jsondecode(data.aws_lambda_invocation.boomi-license-validation.result)["token"]
-  }
-  set {
-     name = "efs_id"
-     value = module.efs.id
-  }
-  set {
-     name = "base_path"
-     value = local.name
-  }
-}
-
