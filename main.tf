@@ -17,14 +17,14 @@ locals {
     BoomiContact = "eks-quickstart"
   }
 
-  username = var.boomi_install_token != " " ? "BOOMI_TOKEN.${var.boomi_username}" : var.boomi_username
-  password = var.boomi_install_token != " " ? var.boomi_install_token : var.boomi_password
+  username = "BOOMI_TOKEN.${var.boomi_username}"
+  password = var.boomi_install_token
   token_type =  "Molecule"
   token_timeout = 90  
 
   vpc_id     = var.create_new_vpc ? module.vpc.vpc_id : var.existing_vpc_id
   private_subnet_ids = var.create_new_vpc ? module.vpc.private_subnets : var.existing_private_subnets_ids
-  #public_subnet_ids = var.create_new_vpc ? module.vpc.public_subnets : var.existing_public_subnets_ids
+  public_subnet_ids = var.create_new_vpc ? module.vpc.public_subnets : var.existing_public_subnets_ids
   private_subnet_cidrs  = var.create_new_vpc ? var.private_subnets : values(data.aws_subnet.aws_private_subnet_cidr)[*].cidr_block  
   bastion_security_group_id = var.create_new_vpc ? module.bastion_sg.security_group_id : var.bastion_security_group_id
 
@@ -109,7 +109,7 @@ data "aws_lambda_invocation" "boomi_license_validation" {
 #tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_policy" "efs_driver_policy" {
     name  = "${local.name}-efs-driver-policy"
-    policy = "${file("aws-policy.json")}"
+    policy = file("aws-policy.json")
 }
 
 resource "aws_iam_role" "efs_driver_role" {
@@ -136,6 +136,7 @@ resource "aws_iam_role" "efs_driver_role" {
 }
 
 #tfsec:ignore:aws-eks-enable-control-plane-logging
+#tfsec:ignore:aws-ec2-no-public-egress-sgr
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
@@ -181,9 +182,9 @@ module "eks" {
     initial = {
       instance_types = ["t3.xlarge"]
 
-      min_size     = 2
+      min_size     = 3
       max_size     = 4
-      desired_size = 2
+      desired_size = 3
     }
   }
 
@@ -239,7 +240,7 @@ module "bastion_sg" {
       to_port     = 22
       protocol    = "tcp"
       description = "SSH Port"
-      cidr_blocks = "0.0.0.0/0"
+      cidr_blocks = var.bastion_remote_access_cidr
     },
     {
       from_port   = -1
@@ -264,7 +265,6 @@ module "bastion_sg" {
   ]
 }
 
-#tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_policy" "bastion_host_policy" {
   name        = "bastion_host_policy"
   description = "IAM Policy for Bastion Host EKS access"
@@ -278,10 +278,16 @@ resource "aws_iam_policy" "bastion_host_policy" {
             "eks:DescribeUpdate",
             "eks:ListUpdates",
             "eks:UpdateClusterVersion",
-            "eks:CreateAddon"
+            "eks:CreateAddon",
+            "secretsmanager:GetSecretValue",
+            "iam:PassRole"
         ]
         Effect   = "Allow"
-        Resource = "*"
+        Resource = [
+          module.eks.cluster_arn,
+          aws_secretsmanager_secret.eks-blueprint-secret.arn,
+          aws_iam_role.efs_driver_role.arn
+        ]
       },
     ]
   })
@@ -293,6 +299,7 @@ resource "aws_iam_policy" "bastion_host_policy" {
 #tfsec:ignore:aws-s3-enable-bucket-logging
 module "s3_bucket" {
   source = "terraform-aws-modules/s3-bucket/aws"
+  version = "4.1.0"
 
   bucket = "${local.name}-artifact-bucket"
   acl    = "private"
@@ -356,6 +363,7 @@ module "asg" {
   health_check_type         = "EC2"
   vpc_zone_identifier       = module.vpc.public_subnets
 
+  #vpc_zone_identifier = local.public_subnet_ids
   # Launch template
   launch_template_name        = "BastionHost-for-eks-blueprint"
   launch_template_description = "BastionHost-for-eks-blueprint"
@@ -455,4 +463,25 @@ module "vpc" {
   }
 
   tags = local.tags
+}
+
+#tfsec:ignore:aws-ssm-secret-use-customer-key
+resource "aws_secretsmanager_secret" "eks-blueprint-secret" {
+  name = "${local.name}-eks-blueprint-v1"
+  recovery_window_in_days = 0
+  #kms_key_id = aws_kms_key.lambda_kms_key.arn
+}
+
+resource "aws_secretsmanager_secret_version" "eks-blueprint-credentials" {
+  secret_id = aws_secretsmanager_secret.eks-blueprint-secret.id
+
+  secret_string = jsonencode(
+    {
+      efs_driver_role_arn = aws_iam_role.efs_driver_role.arn
+      efs_id = module.efs.id
+      boomi_account_id  = var.boomi_account_id
+      boomi_username = var.boomi_username      
+      install_token = jsondecode(data.aws_lambda_invocation.boomi_license_validation.result)["token"] 
+    }
+  )
 }

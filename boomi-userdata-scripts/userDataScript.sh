@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Install Git
-sudo yum update -y
-sudo yum install git -y
+#sudo yum update -y
+#sudo yum install git -y
 
 # Install helm
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
@@ -23,8 +23,4 @@ do
         cluster_status=$(aws eks describe-cluster --name ${cluster_name} --region ${region} | jq -r '.cluster.status')
 done
 
-# Updating kubeconfig on bastion host
-su ec2-user -c 'aws eks update-kubeconfig --region ${region} --name ${cluster_name}'
-
-# Install EFS CSI Driver addon
-su ec2-user -c 'aws eks create-addon --cluster-name ${cluster_name} --region ${region} --addon-name aws-efs-csi-driver'
+aws eks update-kubeconfig --region ${region} --name ${cluster_name}

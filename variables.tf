@@ -20,12 +20,6 @@ variable vpc_cidr {
     default = "10.0.0.0/16"
 }
 
-variable boomi_script_location {
-    description = "This is to provide boomi helm repository location"
-    type = string
-    default = ""
-}
-
 variable availability_zones {
     description = "A list of availability zones names"
     type = list
@@ -44,21 +38,10 @@ variable public_subnets {
     default = ["10.0.128.0/20","10.0.144.0/20","10.0.160.0/20","10.0.224.0/19"]
 }
 
-variable bastion_key_name {
-    description = "EC2 Keypair Name for Bastion Host"
-    type = string
-}
-
 variable bastion_ami_id {
     description = "AMI ID for Bastion Host"
     type = string
     default = "ami-07dfed28fcf95241c"
-}
-
-variable cluster_endpoint_public_access_cidrs{
-    description = "CIDR Range for EKS public access"
-    type = string
-    default = "0.0.0.0/0"
 }
 
 variable bastion_remote_access_cidr{
@@ -85,7 +68,7 @@ variable existing_private_subnets_ids {
 
 variable existing_public_subnets_ids {
     description = "List of public subnet ids"
-    type = list
+    type = list  
 }
 
 variable bastion_security_group_id {
@@ -125,9 +108,5 @@ variable boomi_account_id {
 }
 variable boomi_install_token {
     description = "Boomi AtomSphere API Tokens"
-    type = string
-}
-variable boomi_password {
-    description = "Boomi Password, this is not needed when boomi_install_token is provided."
     type = string
 }

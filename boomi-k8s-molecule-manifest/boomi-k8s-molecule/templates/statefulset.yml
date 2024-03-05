@@ -71,23 +71,10 @@ spec:
                 secretKeyRef:
                   name: boomi-secret
                   key: account
-{{ if .Values.InstallTokenProvided }}
             - name: INSTALL_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: boomi-secret
                   key: token
-{{ else }}
-            - name: BOOMI_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: boomi-secret
-                  key: username
-            - name: BOOMI_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: boomi-secret
-                  key: password
-{{ end }}
             - name: CONTAINER_PROPERTIES_OVERRIDES
               value: com.boomi.container.debug=true
