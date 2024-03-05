@@ -47,7 +47,7 @@ variable bastion_ami_id {
 variable bastion_remote_access_cidr{
     description = "CIDR Range for bastion Host"
     type = string
-    default = "3.109.64.63/32"
+    default = "0.0.0.0/0"
 }
 
 variable "create_new_vpc" {
