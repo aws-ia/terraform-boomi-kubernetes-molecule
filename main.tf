@@ -265,6 +265,13 @@ module "bastion_sg" {
   ]
 }
 
+#tfsec:ignore:aws-ssm-secret-use-customer-key
+resource "aws_secretsmanager_secret" "eks_blueprint_secret" {
+  name = "${local.name}-eks-blueprint-v1"
+  recovery_window_in_days = 0
+  #kms_key_id = aws_kms_key.lambda_kms_key.arn
+}
+
 resource "aws_iam_policy" "bastion_host_policy" {
   name        = "bastion_host_policy"
   description = "IAM Policy for Bastion Host EKS access"
@@ -465,13 +472,6 @@ module "vpc" {
   }
 
   tags = local.tags
-}
-
-#tfsec:ignore:aws-ssm-secret-use-customer-key
-resource "aws_secretsmanager_secret" "eks_blueprint_secret" {
-  name = "${local.name}-eks-blueprint-v1"
-  recovery_window_in_days = 0
-  #kms_key_id = aws_kms_key.lambda_kms_key.arn
 }
 
 resource "aws_secretsmanager_secret_version" "eks_blueprint_credentials" {
