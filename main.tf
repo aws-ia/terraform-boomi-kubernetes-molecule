@@ -339,7 +339,7 @@ resource "aws_s3_object" "bastion_host_keypair" {
   depends_on = [module.s3_bucket]
 }
 
-resource "aws_s3_object" "boomi-molecule" {
+resource "aws_s3_object" "boomi_molecule" {
   bucket  = "${local.name}-artifact-bucket"
   key     = "${local.name}-boomi-k8s-molecule"
   source = "boomi-k8s-molecule-0.1.0.tgz"
@@ -361,9 +361,9 @@ module "asg" {
   desired_capacity          = 1
   wait_for_capacity_timeout = 0
   health_check_type         = "EC2"
-  vpc_zone_identifier       = module.vpc.public_subnets
+  #vpc_zone_identifier       = module.vpc.public_subnets
 
-  #vpc_zone_identifier = local.public_subnet_ids
+  vpc_zone_identifier = local.public_subnet_ids
   # Launch template
   launch_template_name        = "BastionHost-for-eks-blueprint"
   launch_template_description = "BastionHost-for-eks-blueprint"
@@ -466,14 +466,14 @@ module "vpc" {
 }
 
 #tfsec:ignore:aws-ssm-secret-use-customer-key
-resource "aws_secretsmanager_secret" "eks-blueprint-secret" {
+resource "aws_secretsmanager_secret" "eks_blueprint_secret" {
   name = "${local.name}-eks-blueprint-v1"
   recovery_window_in_days = 0
   #kms_key_id = aws_kms_key.lambda_kms_key.arn
 }
 
-resource "aws_secretsmanager_secret_version" "eks-blueprint-credentials" {
-  secret_id = aws_secretsmanager_secret.eks-blueprint-secret.id
+resource "aws_secretsmanager_secret_version" "eks_blueprint_credentials" {
+  secret_id = aws_secretsmanager_secret.eks_blueprint_secret.id
 
   secret_string = jsonencode(
     {
