@@ -292,7 +292,9 @@ resource "aws_iam_policy" "bastion_host_policy" {
     ]
   })
   depends_on = [
-    module.eks
+    module.eks,
+    aws_secretsmanager_secret.eks-blueprint-secret,
+    aws_iam_role.efs_driver_role
   ]
 }
 
