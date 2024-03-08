@@ -25,9 +25,8 @@ module "vpc" {
 
 module boomi-eks-molecule {
     source = "../.."
-    bastion_key_name = ""
     
-    boomi_script_location = "../../" 
+    boomi_script_location = "../../"
 
     boomi_username = var.boomi_username
     boomi_account_id = var.boomi_account_id
