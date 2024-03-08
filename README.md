@@ -77,6 +77,7 @@ This file will contain any instructional information about this module.
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | A list of availability zones names | `list` | <pre>[<br>  "us-west-2a",<br>  "us-west-2b",<br>  "us-west-2c",<br>  "us-west-2d"<br>]</pre> | no |
 | <a name="input_bastion_ami_id"></a> [bastion\_ami\_id](#input\_bastion\_ami\_id) | AMI ID for Bastion Host | `string` | `"ami-07dfed28fcf95241c"` | no |
 | <a name="input_bastion_remote_access_cidr"></a> [bastion\_remote\_access\_cidr](#input\_bastion\_remote\_access\_cidr) | CIDR Range for bastion Host | `string` | `"0.0.0.0/0"` | no |
+| <a name="input_boomi_script_location"></a> [boomi\_script\_location](#input\_boomi\_script\_location) | Path to Boomi terraform root | `string` | `""` | no |
 | <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | EKS Cluster Version | `string` | `"1.27"` | no |
 | <a name="input_create_new_vpc"></a> [create\_new\_vpc](#input\_create\_new\_vpc) | If set to true, will create new VPC. If set to false, the existing provided vpc is used | `bool` | `false` | no |
 | <a name="input_deployment_name"></a> [deployment\_name](#input\_deployment\_name) | Deployment Name for the boomi terraform deployment. | `string` | `"boomi-eks-blueprint"` | no |
@@ -88,7 +89,5 @@ This file will contain any instructional information about this module.
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_ssh_private_key"></a> [ssh\_private\_key](#output\_ssh\_private\_key) | generated ssh private key for bastion host |
+No outputs.
 <!-- END_TF_DOCS -->

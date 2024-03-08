@@ -33,7 +33,5 @@ No resources.
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_kubectl_command"></a> [kubectl\_command](#output\_kubectl\_command) | Configure kubectl: make sure you're logged in with the correct AWS profile and run the following command to update your kubeconfig |
+No outputs.
 <!-- END_TF_DOCS -->
