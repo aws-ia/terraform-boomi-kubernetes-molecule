@@ -12,5 +12,7 @@ install_token=$(aws secretsmanager get-secret-value  --secret-id $deployment_nam
 aws eks update-kubeconfig --region $region --name $deployment_name
 aws eks create-addon --cluster-name $deployment_name --region $region --addon-name aws-efs-csi-driver --service-account-role-arn $efs_driver_role_arn
 
-aws s3 cp s3://$deployment_name-artifact-bucket/$deployment_name-boomi-k8s-molecule - | tar -xz
+aws s3 cp s3://$deployment_name-artifact-bucket/$deployment_name-boomi-k8s-molecule .
+unzip $deployment_name-boomi-k8s-molecule -d boomi-k8s-molecule
 helm upgrade --install -n eks-boomi-molecule --create-namespace --set MoleculeClusterName="k8s-boomi-molecule" --set boomi_username=$boomi_username --set boomi_account_id=$boomi_account_id --set boomi_mfa_install_token=$install_token --set efs_id=$efs_id --set base_path=$deployment_name boomi-k8s-molecule boomi-k8s-molecule/
+rm -rf *

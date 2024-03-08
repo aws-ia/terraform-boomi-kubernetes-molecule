@@ -110,3 +110,8 @@ variable boomi_install_token {
     description = "Boomi AtomSphere API Tokens"
     type = string
 }
+variable boomi_script_location {
+    description = "Path to Boomi terraform root"
+    type = string
+    default = ""
+}

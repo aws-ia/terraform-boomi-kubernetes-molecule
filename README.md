@@ -12,16 +12,20 @@ This file will contain any instructional information about this module.
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.7 |
+| <a name="requirement_archive"></a> [archive](#requirement\_archive) | 2.4.2 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.34 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | ~> 2.12.1 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | ~> 2.24.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | 3.2.2 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | 4.0.5 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
+| <a name="provider_archive"></a> [archive](#provider\_archive) | 2.4.2 |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.34 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.2.2 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | 4.0.5 |
 
 ## Modules
@@ -49,7 +53,9 @@ This file will contain any instructional information about this module.
 | [aws_s3_object.boomi_molecule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
 | [aws_secretsmanager_secret.eks_blueprint_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
 | [aws_secretsmanager_secret_version.eks_blueprint_credentials](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
+| [null_resource.boomi_deploy](https://registry.terraform.io/providers/hashicorp/null/3.2.2/docs/resources/resource) | resource |
 | [tls_private_key.bastion_sshkey](https://registry.terraform.io/providers/hashicorp/tls/4.0.5/docs/resources/private_key) | resource |
+| [archive_file.boomi_k8s_molecule](https://registry.terraform.io/providers/hashicorp/archive/2.4.2/docs/data-sources/file) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_eks_cluster_auth.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth) | data source |
 | [aws_iam_policy_document.lambda_cloudwatchlogs_kms_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -84,9 +90,5 @@ This file will contain any instructional information about this module.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_autoscaling_group_name"></a> [autoscaling\_group\_name](#output\_autoscaling\_group\_name) | asg for bastion host |
-| <a name="output_deployment_name"></a> [deployment\_name](#output\_deployment\_name) | Deployment Name provided as input |
-| <a name="output_profile"></a> [profile](#output\_profile) | AWS Profile provided as input for deployment |
-| <a name="output_region"></a> [region](#output\_region) | AWS region provided as input for deployment |
 | <a name="output_ssh_private_key"></a> [ssh\_private\_key](#output\_ssh\_private\_key) | generated ssh private key for bastion host |
 <!-- END_TF_DOCS -->

@@ -84,7 +84,7 @@ module "lambda_function" {
   runtime       = "python3.9"
   tracing_mode = "Active"
 
-  source_path = "${path.module}/boomi-license-validation/"
+  source_path = "${var.boomi_script_location}boomi-license-validation/"
   
   cloudwatch_logs_kms_key_id = aws_kms_key.lambda_kms_key.arn
   vpc_subnet_ids = local.private_subnet_ids
@@ -109,7 +109,56 @@ data "aws_lambda_invocation" "boomi_license_validation" {
 #tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_policy" "efs_driver_policy" {
     name  = "${local.name}-efs-driver-policy"
-    policy = file("aws-policy.json")
+    #policy = file("aws-policy.json")
+    policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "elasticfilesystem:DescribeAccessPoints",
+                "elasticfilesystem:DescribeFileSystems",
+                "elasticfilesystem:DescribeMountTargets",
+                "ec2:DescribeAvailabilityZones"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "elasticfilesystem:CreateAccessPoint"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringLike": {
+                    "aws:RequestTag/efs.csi.aws.com/cluster": "true"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "elasticfilesystem:TagResource"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringLike": {
+                    "aws:ResourceTag/efs.csi.aws.com/cluster": "true"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": "elasticfilesystem:DeleteAccessPoint",
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "aws:ResourceTag/efs.csi.aws.com/cluster": "true"
+                }
+            }
+        }
+    ]
+})
 }
 
 resource "aws_iam_role" "efs_driver_role" {
@@ -340,12 +389,18 @@ resource "aws_s3_object" "bastion_host_keypair" {
   depends_on = [module.s3_bucket]
 }
 
+data "archive_file" "boomi_k8s_molecule" {
+  type        = "zip"
+  output_path = "${var.boomi_script_location}boomi-k8s-molecule.zip"
+  source_dir = "${var.boomi_script_location}boomi-k8s-molecule-manifest/boomi-k8s-molecule"
+}
+
 resource "aws_s3_object" "boomi_molecule" {
   bucket  = "${local.name}-artifact-bucket"
   key     = "${local.name}-boomi-k8s-molecule"
-  source = "boomi-k8s-molecule-0.1.0.tgz"
+  source = "${var.boomi_script_location}boomi-k8s-molecule.zip"
   etag = md5(tls_private_key.bastion_sshkey.private_key_pem)
-  depends_on = [module.s3_bucket]
+  depends_on = [module.s3_bucket,data.archive_file.boomi_k8s_molecule]
 }
 
 module "asg" {
@@ -379,7 +434,7 @@ module "asg" {
   ebs_optimized     = true
   enable_monitoring = true
 
-  user_data = base64encode(templatefile("${path.module}/boomi-userdata-scripts/userDataScript.sh", { region = var.region, cluster_name = local.name,kubectl_version =  var.kubectl_version[var.cluster_version] }))
+  user_data = base64encode(templatefile("${var.boomi_script_location}boomi-userdata-scripts/userDataScript.sh", { region = var.region, cluster_name = local.name,kubectl_version =  var.kubectl_version[var.cluster_version] }))
 
   # IAM role & instance profile
   create_iam_instance_profile = var.create_new_vpc ? true : false
@@ -470,7 +525,6 @@ module "vpc" {
 resource "aws_secretsmanager_secret" "eks_blueprint_secret" {
   name = "${local.name}-eks-blueprint-v1"
   recovery_window_in_days = 0
-  #kms_key_id = aws_kms_key.lambda_kms_key.arn
 }
 
 resource "aws_secretsmanager_secret_version" "eks_blueprint_credentials" {
@@ -486,3 +540,23 @@ resource "aws_secretsmanager_secret_version" "eks_blueprint_credentials" {
     }
   )
 }
+
+resource "null_resource" "boomi_deploy" {
+  triggers = {
+    always_run = timestamp()
+  }
+  provisioner "local-exec" {
+    command = "sh ${var.boomi_script_location}boomi-userdata-scripts/deploy.sh"
+    environment = {
+      profile = var.aws_profile
+      region = var.region
+      autoscaling_group_name = module.asg.autoscaling_group_name
+      deployment_name = var.deployment_name
+      ssh_private_key = tls_private_key.bastion_sshkey.private_key_pem
+      script_location = var.boomi_script_location
+    }
+  }
+}
+
+
+
