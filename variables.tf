@@ -71,11 +71,6 @@ variable existing_public_subnets_ids {
     type = list  
 }
 
-variable bastion_security_group_id {
-    description = "Security Group ID of bastion host. This will be added to EKS for access from Bastion Host."
-    type = string
-}
-
 variable cluster_version {
     type = string
     default = "1.27"

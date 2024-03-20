@@ -16,7 +16,6 @@ module boomi-eks-molecule {
 
     existing_vpc_id = ""
     existing_private_subnets_ids = []
-    bastion_security_group_id = ""
     existing_public_subnets_ids = []
     boomi_script_location = "../../"
 }

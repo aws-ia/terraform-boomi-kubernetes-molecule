@@ -14,7 +14,6 @@ locals {
   tags = {
     Name  = local.name
     Type = "EKS Blueprint Terraform"
-    BoomiContact = "eks-quickstart"
   }
 
   username = "BOOMI_TOKEN.${var.boomi_username}"
@@ -26,7 +25,7 @@ locals {
   private_subnet_ids = var.create_new_vpc ? module.vpc.private_subnets : var.existing_private_subnets_ids
   public_subnet_ids = var.create_new_vpc ? module.vpc.public_subnets : var.existing_public_subnets_ids
   private_subnet_cidrs  = var.create_new_vpc ? var.private_subnets : values(data.aws_subnet.aws_private_subnet_cidr)[*].cidr_block  
-  bastion_security_group_id = var.create_new_vpc ? module.bastion_sg.security_group_id : var.bastion_security_group_id
+  bastion_security_group_id = module.bastion_sg.security_group_id
 
   account_id = data.aws_caller_identity.current.account_id
 }
@@ -409,8 +408,8 @@ module "asg" {
   # Autoscaling group
   name = "BastionHost-for-eks-blueprint"
 
-  create                 = var.create_new_vpc ? true : false
-  create_launch_template = var.create_new_vpc ? true : false
+  create                 = true 
+  create_launch_template = true
 
   min_size                  = 1
   max_size                  = 1
@@ -437,7 +436,7 @@ module "asg" {
   user_data = base64encode(templatefile("${var.boomi_script_location}boomi-userdata-scripts/userDataScript.sh", { region = var.region, cluster_name = local.name,kubectl_version =  var.kubectl_version[var.cluster_version] }))
 
   # IAM role & instance profile
-  create_iam_instance_profile = var.create_new_vpc ? true : false
+  create_iam_instance_profile = true
   iam_role_name               = "Bastion-Role"
   iam_role_description        = "Bastion Role to access EKS"
   iam_role_policies = {
@@ -557,6 +556,5 @@ resource "null_resource" "boomi_deploy" {
     }
   }
 }
-
 
 

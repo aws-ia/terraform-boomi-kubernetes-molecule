@@ -31,7 +31,6 @@ module boomi-eks-molecule {
     boomi_username = var.boomi_username
     boomi_account_id = var.boomi_account_id
     boomi_install_token = var.boomi_install_token
-    boomi_password = ""
     aws_profile = var.aws_profile
 
     create_new_vpc = false
@@ -39,5 +38,4 @@ module boomi-eks-molecule {
     existing_private_subnets_ids = module.vpc.private_subnets
     existing_public_subnets_ids = module.vpc.public_subnets
     availability_zones = module.vpc.azs
-    bastion_security_group_id = ""
 }

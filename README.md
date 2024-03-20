@@ -67,7 +67,6 @@ This file will contain any instructional information about this module.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile for the deployment. | `string` | n/a | yes |
-| <a name="input_bastion_security_group_id"></a> [bastion\_security\_group\_id](#input\_bastion\_security\_group\_id) | Security Group ID of bastion host. This will be added to EKS for access from Bastion Host. | `string` | n/a | yes |
 | <a name="input_boomi_account_id"></a> [boomi\_account\_id](#input\_boomi\_account\_id) | Boomi Account ID | `string` | n/a | yes |
 | <a name="input_boomi_install_token"></a> [boomi\_install\_token](#input\_boomi\_install\_token) | Boomi AtomSphere API Tokens | `string` | n/a | yes |
 | <a name="input_boomi_username"></a> [boomi\_username](#input\_boomi\_username) | Boomi Username | `string` | n/a | yes |
@@ -89,5 +88,9 @@ This file will contain any instructional information about this module.
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_autoscaling_group_name"></a> [autoscaling\_group\_name](#output\_autoscaling\_group\_name) | n/a |
+| <a name="output_bastion_host_key_file"></a> [bastion\_host\_key\_file](#output\_bastion\_host\_key\_file) | n/a |
+| <a name="output_bastion_host_region"></a> [bastion\_host\_region](#output\_bastion\_host\_region) | n/a |
 <!-- END_TF_DOCS -->
