@@ -90,7 +90,7 @@ This file will contain any instructional information about this module.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_autoscaling_group_name"></a> [autoscaling\_group\_name](#output\_autoscaling\_group\_name) | n/a |
-| <a name="output_bastion_host_key_file"></a> [bastion\_host\_key\_file](#output\_bastion\_host\_key\_file) | n/a |
-| <a name="output_bastion_host_region"></a> [bastion\_host\_region](#output\_bastion\_host\_region) | n/a |
+| <a name="output_autoscaling_group_name"></a> [autoscaling\_group\_name](#output\_autoscaling\_group\_name) | Bastion host autoscaling group. This can be used to filter bastion host instance |
+| <a name="output_bastion_host_key_file"></a> [bastion\_host\_key\_file](#output\_bastion\_host\_key\_file) | Key file used to connect to bastion host as ec2-user |
+| <a name="output_bastion_host_region"></a> [bastion\_host\_region](#output\_bastion\_host\_region) | Region of the bastion host |
 <!-- END_TF_DOCS -->
