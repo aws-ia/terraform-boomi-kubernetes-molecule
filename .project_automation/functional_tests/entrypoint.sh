@@ -9,38 +9,18 @@ echo "Starting Functional Tests"
 
 cd ${PROJECT_PATH}
 
-## Build Makefile for boomi license validation script to be built ###
-
-## make clean build
+#********** MAKEFILE *************
+echo "Build the lambda function packages"
+make clean build
 
 #********** Get TF-Vars ******************
 #boomi_username = ""
-aws ssm get-parameter \
-    --name "/terraform-boomi-kubernetes-molecule-username" \
-    --with-decryption \
-    --query "Parameter.Value" \
-    --output "text" \
-    --region "us-east-1">>tf.auto.tfvars
-
 #boomi_account_id = ""
-aws ssm get-parameter \
-    --name "/terraform-boomi-kubernetes-molecule-account" \
-    --with-decryption \
-    --query "Parameter.Value" \
-    --output "text" \
-    --region "us-east-1">>tf.auto.tfvars
-
 #boomi_install_token = ""
-aws ssm get-parameter \
-    --name "/terraform-boomi-kubernetes-molecule-token" \
-    --with-decryption \
-    --query "Parameter.Value" \
-    --output "text" \
-    --region "us-east-1">>tf.auto.tfvars
-
 #aws_profile = "default"
+
 aws ssm get-parameter \
-    --name "/terraform-boomi-kubernetes-molecule-profile" \
+    --name "/terraform-boomi-kubernetes-molecule" \
     --with-decryption \
     --query "Parameter.Value" \
     --output "text" \
