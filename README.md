@@ -54,6 +54,7 @@ This file will contain any instructional information about this module.
 | [aws_secretsmanager_secret.eks_blueprint_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
 | [aws_secretsmanager_secret_version.eks_blueprint_credentials](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
 | [null_resource.boomi_deploy](https://registry.terraform.io/providers/hashicorp/null/3.2.2/docs/resources/resource) | resource |
+| [null_resource.boomi_undeploy](https://registry.terraform.io/providers/hashicorp/null/3.2.2/docs/resources/resource) | resource |
 | [tls_private_key.bastion_sshkey](https://registry.terraform.io/providers/hashicorp/tls/4.0.5/docs/resources/private_key) | resource |
 | [archive_file.boomi_k8s_molecule](https://registry.terraform.io/providers/hashicorp/archive/2.4.2/docs/data-sources/file) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
