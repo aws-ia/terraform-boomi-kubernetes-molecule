@@ -6,16 +6,26 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 )
 
-func TestExamplesBasic(t *testing.T) {
+func configureTerraformOptions(t *testing.T, terraformDir string, tfModule string) (*terraform.Options) {
 
 	terraformOptions := &terraform.Options{
-		TerraformDir: "../examples/basic",
-		// Vars: map[string]interface{}{
-		// 	"myvar":     "test",
-		// 	"mylistvar": []string{"list_item_1"},
-		// },
+
+		TerraformDir: terraformDir,
+		Targets: []string{tfModule},
 	}
 
-	defer terraform.Destroy(t, terraformOptions)
-	terraform.InitAndApply(t, terraformOptions)
+	return terraformOptions
+
+}
+
+func TestExamplesBasic(t *testing.T) {
+
+	terraformApplyOptions := configureTerraformOptions(t, "../examples/boomi-molecule-with-new-vpc", "module.boomi-eks-molecule")
+	terraformDestroydeploymentOptions := configureTerraformOptions(t, "../examples/boomi-molecule-with-new-vpc", "module.boomi-eks-molecule.null_resource.boomi_undeploy")
+	terraformDestroyOptions := configureTerraformOptions(t, "../examples/boomi-molecule-with-new-vpc", "module.boomi-eks-molecule")
+	
+	terraform.InitAndApply(t, terraformApplyOptions)
+	terraform.InitAndApply(t, terraformApplyOptions)
+	terraform.Destroy(t, terraformDestroydeploymentOptions)
+	terraform.Destroy(t, terraformDestroyOptions)
 }

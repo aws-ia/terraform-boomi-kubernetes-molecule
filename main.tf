@@ -555,6 +555,31 @@ resource "null_resource" "boomi_deploy" {
       script_location = var.boomi_script_location
     }
   }
+  depends_on = [
+    module.eks,module.asg
+  ]
+}
+
+resource "null_resource" "boomi_undeploy" {
+  triggers = {
+      profile = var.aws_profile
+      region = var.region
+      autoscaling_group_name = module.asg.autoscaling_group_name
+      deployment_name = var.deployment_name
+      ssh_private_key = tls_private_key.bastion_sshkey.private_key_pem
+      script_location = var.boomi_script_location
+  }
+  provisioner "local-exec" {
+    when       = destroy
+    command = "sh ${self.triggers.script_location}boomi-userdata-scripts/undeploy.sh"
+    environment = {
+      profile = self.triggers.profile
+      region = self.triggers.region
+      autoscaling_group_name = self.triggers.autoscaling_group_name
+      deployment_name = self.triggers.deployment_name
+      ssh_private_key = self.triggers.ssh_private_key
+    }
+  }
 }
 
 

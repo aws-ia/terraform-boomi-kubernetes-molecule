@@ -9,6 +9,39 @@ echo "Starting Functional Tests"
 
 cd ${PROJECT_PATH}
 
+## Build Makefile for boomi license validation script to be built ###
+
+## make clean build
+
+#********** Get TF-Vars ******************
+aws ssm get-parameter \
+    --name "/terraform-boomi-kubernetes-molecule-username" \
+    --with-decryption \
+    --query "Parameter.Value" \
+    --output "text" \
+    --region "us-east-1">>tf.auto.tfvars
+
+aws ssm get-parameter \
+    --name "/terraform-boomi-kubernetes-molecule-account" \
+    --with-decryption \
+    --query "Parameter.Value" \
+    --output "text" \
+    --region "us-east-1">>tf.auto.tfvars
+
+aws ssm get-parameter \
+    --name "/terraform-boomi-kubernetes-molecule-token" \
+    --with-decryption \
+    --query "Parameter.Value" \
+    --output "text" \
+    --region "us-east-1">>tf.auto.tfvars
+
+aws ssm get-parameter \
+    --name "/terraform-boomi-kubernetes-molecule-profile" \
+    --with-decryption \
+    --query "Parameter.Value" \
+    --output "text" \
+    --region "us-east-1">>tf.auto.tfvars
+
 #********** Checkov Analysis *************
 echo "Running Checkov Analysis"
 terraform init

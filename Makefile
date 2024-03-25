@@ -15,8 +15,10 @@ clean:
 	rm -rf examples/*/builds/
 	rm -f examples/*/*.tfvars
 	rm -rf examples/*/tmp/
+	rm -rf examples/*/tf.auto.tfvars
 	rm -rf tmp/
 	rm -rf *.zip
+	rm -rf tf.auto.tfvars
 	cd boomi-license-validation && $(MAKE) clean
 
 build:
