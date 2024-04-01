@@ -282,7 +282,7 @@ module "bastion_sg" {
   name        = "eks-blueprint-bastion-sg"
   description = "Security group for Bastion Host - EKS Blueprint"
   vpc_id      = var.create_new_vpc ? module.vpc.vpc_id : var.existing_vpc_id
-
+  #checkov:skip=CKV_AWS_24:User will provide their own cidr
   ingress_with_cidr_blocks = [
     {
       from_port   = 22
@@ -497,7 +497,7 @@ module "asg" {
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws" 
   version = "~> 5.7.0"
-
+  #checkov:skip=CKV2_AWS_11:Flow logs are enabled, this is a false positive
   name = local.name
   cidr = var.vpc_cidr
 
