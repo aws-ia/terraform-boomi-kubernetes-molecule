@@ -495,7 +495,7 @@ module "asg" {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.4.0"
+  version = "~> 5.7.0"
 
   name = local.name
   cidr = var.vpc_cidr
@@ -508,6 +508,10 @@ module "vpc" {
 
   enable_nat_gateway = true
   single_nat_gateway = true
+
+  enable_flow_log                      = true
+  create_flow_log_cloudwatch_log_group = true
+  create_flow_log_cloudwatch_iam_role  = true
 
   public_subnet_tags = {
     "kubernetes.io/role/elb" = 1

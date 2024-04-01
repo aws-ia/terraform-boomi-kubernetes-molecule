@@ -26,6 +26,11 @@ aws ssm get-parameter \
     --output "text" \
     --region "us-east-1">>tf.auto.tfvars
 
+########## Copy tfvars to examples #########
+
+cp tf.auto.tfvars examples/boomi-molecule-with-new-vpc
+
+
 #********** Checkov Analysis *************
 echo "Running Checkov Analysis"
 terraform init
