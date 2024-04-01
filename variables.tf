@@ -52,23 +52,26 @@ variable bastion_remote_access_cidr{
 
 variable "create_new_vpc" {
   description = "If set to true, will create new VPC. If set to false, the existing provided vpc is used"
-  default = false
+  default = true
   type   = bool
 }
 
 variable existing_vpc_id {
     description = "VPC ID for existing VPC"
     type = string
+    default = ""
 }
 
 variable existing_private_subnets_ids {
     description = "List of private subnet ids"
     type = list  
+    default = []
 }
 
 variable existing_public_subnets_ids {
     description = "List of public subnet ids"
-    type = list  
+    type = list 
+    default = [] 
 }
 
 variable cluster_version {
