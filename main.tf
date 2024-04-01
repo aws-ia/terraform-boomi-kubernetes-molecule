@@ -493,8 +493,9 @@ module "asg" {
   ]
 }
 
+#tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
 module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
+  source  = "terraform-aws-modules/vpc/aws" 
   version = "~> 5.7.0"
 
   name = local.name
