@@ -297,9 +297,9 @@ module "efs" {
   tags = local.tags
 }
 
+
 #tfsec:ignore:aws-ec2-no-public-egress-sgr
 #tfsec:ignore:aws-ec2-no-public-ingress-sgr
-
 module "bastion_sg" {
   source = "terraform-aws-modules/security-group/aws"
   version = "~> 5.1.0"
@@ -525,7 +525,8 @@ module "asg" {
   ]
 }
 
-
+# VPC Flow log is enabled
+#tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws" 
   version = "~> 5.7.0"
