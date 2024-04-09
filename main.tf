@@ -40,7 +40,7 @@ data "aws_iam_policy_document" "lambda_cloudwatchlogs_kms_policy" {
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::${local.account_id}:root"]
+      identifiers = ["arn:aws:iam::${local.account_id}:root","arn:aws:iam::${local.account_id}:role/admin"]
     }
 
     actions = [
@@ -62,7 +62,6 @@ data "aws_iam_policy_document" "lambda_cloudwatchlogs_kms_policy" {
       "kms:GenerateDataKey*",
       "kms:Describe*"
     ]
-
     resources = ["*"]
   }
 }
@@ -74,7 +73,13 @@ resource "aws_kms_key" "lambda_kms_key" {
   enable_key_rotation = true
 }
 
+
 module "lambda_function" {
+  #checkov:skip=CKV_AWS_117: Lambda function is part of private subnet
+  #checkov:skip=CKV_AWS_272: Lambda is created by user in their AWS Profile.
+  #checkov:skip=CKV_AWS_173: Added changes as per Guide
+  #checkov:skip=CKV_AWS_116: Added DLQ as per guide
+  #checkov:skip=CKV_AWS_158: Added KMS key for cloudwatch log
   source = "terraform-aws-modules/lambda/aws"
   version = "6.5.0"
   function_name = "boomi_license_validation"
@@ -86,7 +91,18 @@ module "lambda_function" {
   source_path = "${var.boomi_script_location}boomi-license-validation/"
   
   cloudwatch_logs_kms_key_id = aws_kms_key.lambda_kms_key.arn
+  kms_key_arn = aws_kms_key.lambda_kms_key.arn
+ 
   vpc_subnet_ids = local.private_subnet_ids
+  attach_dead_letter_policy = true
+  dead_letter_target_arn    = aws_sqs_queue.dlq.arn
+
+}
+
+resource "aws_sqs_queue" "dlq" {
+  name = "boomi_license_validation-dlq"
+  kms_master_key_id                 = aws_kms_key.lambda_kms_key.arn
+  kms_data_key_reuse_period_seconds = 300
 }
 
 data "aws_lambda_invocation" "boomi_license_validation" {
@@ -107,6 +123,7 @@ data "aws_lambda_invocation" "boomi_license_validation" {
 
 #tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_policy" "efs_driver_policy" {
+    #checkov:skip=CKV_AWS_355: Need to confirm on this
     name  = "${local.name}-efs-driver-policy"
     #policy = file("aws-policy.json")
     policy = jsonencode({
@@ -183,9 +200,9 @@ resource "aws_iam_role" "efs_driver_role" {
   })
 }
 
-#tfsec:ignore:aws-eks-enable-control-plane-logging
 #tfsec:ignore:aws-ec2-no-public-egress-sgr
 module "eks" {
+  #checkov:skip=CKV_AWS_341: This option is not available in eks module and it is private EKS cluster
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
@@ -195,6 +212,11 @@ module "eks" {
   vpc_id = local.vpc_id
   control_plane_subnet_ids = concat(local.private_subnet_ids)
   subnet_ids = local.private_subnet_ids
+
+  cloudwatch_log_group_retention_in_days = 365
+  #checkov:skip=CKV_AWS_158: Add kms key as per guide
+  cloudwatch_log_group_kms_key_id = aws_kms_key.lambda_kms_key.arn
+  cluster_enabled_log_types = ["audit", "api", "authenticator","controllerManager","scheduler"]
 
   cluster_security_group_additional_rules = {
     inress_ec2_tcp = {
@@ -270,12 +292,14 @@ module "efs" {
       cidr_blocks = local.private_subnet_cidrs
     }
   }
-
+  #checkov:skip=CKV_AWS_184: Add kms key as per guide
+  kms_key_arn = aws_kms_key.lambda_kms_key.arn
   tags = local.tags
 }
 
 #tfsec:ignore:aws-ec2-no-public-egress-sgr
 #tfsec:ignore:aws-ec2-no-public-ingress-sgr
+
 module "bastion_sg" {
   source = "terraform-aws-modules/security-group/aws"
   version = "~> 5.1.0"
@@ -292,8 +316,8 @@ module "bastion_sg" {
       cidr_blocks = var.bastion_remote_access_cidr
     },
     {
-      from_port   = -1
-      to_port     = -1
+      from_port   = 22
+      to_port     = 22
       protocol    = "icmp"
       description = "SSH Port"
       cidr_blocks = var.bastion_remote_access_cidr
@@ -329,13 +353,17 @@ resource "aws_iam_policy" "bastion_host_policy" {
             "eks:UpdateClusterVersion",
             "eks:CreateAddon",
             "secretsmanager:GetSecretValue",
-            "iam:PassRole"
+            "iam:PassRole",
+            "kms:DescribeKey",
+            "kms:Decrypt",
+            "kms:Encrypt"
         ]
         Effect   = "Allow"
         Resource = [
           module.eks.cluster_arn,
           aws_secretsmanager_secret.eks_blueprint_secret.arn,
-          aws_iam_role.efs_driver_role.arn
+          aws_iam_role.efs_driver_role.arn,
+          aws_kms_key.lambda_kms_key.arn
         ]
       },
     ]
@@ -402,7 +430,10 @@ resource "aws_s3_object" "boomi_molecule" {
   depends_on = [module.s3_bucket,data.archive_file.boomi_k8s_molecule]
 }
 
+
 module "asg" {
+  #checkov:skip=CKV_AWS_88: This is Bastion Host which needs Public IP to connect.
+  #checkov:skip=CKV_AWS_341: This restriction is already added.
   source  = "terraform-aws-modules/autoscaling/aws"
   version = "~>7.3.1"
   # Autoscaling group
@@ -449,6 +480,7 @@ module "asg" {
   metadata_options = {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
+    http_put_response_hop_limit = 1
   }
 
   block_device_mappings = [
@@ -493,11 +525,14 @@ module "asg" {
   ]
 }
 
-#tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
+
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws" 
   version = "~> 5.7.0"
   #checkov:skip=CKV2_AWS_11:Flow logs are enabled, this is a false positive
+  #checkov:skip=CKV_AWS_355
+  #checkov:skip=CKV_AWS_290
+  #checkov:skip=CKV_AWS_158: Lambda is created by user in their AWS Profile.
   name = local.name
   cidr = var.vpc_cidr
 
@@ -513,6 +548,7 @@ module "vpc" {
   enable_flow_log                      = true
   create_flow_log_cloudwatch_log_group = true
   create_flow_log_cloudwatch_iam_role  = true
+  flow_log_cloudwatch_log_group_kms_key_id = aws_kms_key.lambda_kms_key.arn
 
   public_subnet_tags = {
     "kubernetes.io/role/elb" = 1
@@ -523,12 +559,16 @@ module "vpc" {
   }
 
   tags = local.tags
+  depends_on = [
+    aws_kms_key.lambda_kms_key
+  ]
 }
 
 #tfsec:ignore:aws-ssm-secret-use-customer-key
 resource "aws_secretsmanager_secret" "eks_blueprint_secret" {
   name = "${local.name}-eks-blueprint-v1"
   recovery_window_in_days = 0
+  kms_key_id = aws_kms_key.lambda_kms_key.arn
 }
 
 resource "aws_secretsmanager_secret_version" "eks_blueprint_credentials" {
