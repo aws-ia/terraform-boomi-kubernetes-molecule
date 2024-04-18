@@ -1,5 +1,4 @@
 #!/bin/bash
-
 deployment_name=$1
 region=$2
 account_id=$(aws secretsmanager get-secret-value  --secret-id $deployment_name-eks-blueprint-v1| jq --raw-output '.SecretString' | jq -r .boomi_account_id)
