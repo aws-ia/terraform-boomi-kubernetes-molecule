@@ -40,7 +40,7 @@ data "aws_iam_policy_document" "lambda_cloudwatchlogs_kms_policy" {
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::${local.account_id}:root","arn:aws:iam::${local.account_id}:role/admin"]
+      identifiers = ["arn:aws:iam::${local.account_id}:root"]
     }
 
     actions = [
@@ -373,12 +373,16 @@ resource "aws_iam_policy" "bastion_host_policy" {
   ]
 }
 
+resource "random_id" "id" {
+       byte_length = 8
+}
+
 #tfsec:ignore:aws-s3-enable-bucket-logging
 module "s3_bucket" {
   source = "terraform-aws-modules/s3-bucket/aws"
   version = "4.1.0"
 
-  bucket = "${local.name}-artifact-bucket"
+  bucket = "${local.name}-${random_id.id.hex}-artifact-bucket"
   acl    = "private"
 
   control_object_ownership = true
@@ -409,7 +413,7 @@ resource "aws_key_pair" "bastion_host_keypair" {
 }
 
 resource "aws_s3_object" "bastion_host_keypair" {
-  bucket  = "${local.name}-artifact-bucket"
+  bucket  = "${local.name}-${random_id.id.hex}-artifact-bucket"
   key     = "${local.name}-keypair-${var.region}"
   content = tls_private_key.bastion_sshkey.private_key_pem
   etag = md5(tls_private_key.bastion_sshkey.private_key_pem)
@@ -423,7 +427,7 @@ data "archive_file" "boomi_k8s_molecule" {
 }
 
 resource "aws_s3_object" "boomi_molecule" {
-  bucket  = "${local.name}-artifact-bucket"
+  bucket  = "${local.name}-${random_id.id.hex}-artifact-bucket"
   key     = "${local.name}-boomi-k8s-molecule"
   source = "${var.boomi_script_location}boomi-k8s-molecule.zip"
   etag = md5(tls_private_key.bastion_sshkey.private_key_pem)
@@ -579,6 +583,7 @@ resource "aws_secretsmanager_secret_version" "eks_blueprint_credentials" {
     {
       efs_driver_role_arn = aws_iam_role.efs_driver_role.arn
       efs_id = module.efs.id
+      s3_bucket_name = module.s3_bucket.s3_bucket_id
       boomi_account_id  = var.boomi_account_id
       boomi_username = var.boomi_username      
       install_token = jsondecode(data.aws_lambda_invocation.boomi_license_validation.result)["token"] 
