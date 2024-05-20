@@ -27,6 +27,6 @@ func TestExamplesBasic(t *testing.T) {
 	
 	terraform.InitAndApply(t, terraformApplyOptions)
 	terraform.InitAndApply(t, terraformBoomiApplyOptions)
-	terraform.Destroy(t, terraformDestroydeploymentOptions)
+	defer terraform.Destroy(t, terraformDestroydeploymentOptions)
 	defer terraform.Destroy(t, terraformDestroyOptions)
 }
