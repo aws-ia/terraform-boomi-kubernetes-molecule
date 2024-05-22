@@ -7,7 +7,7 @@ variable deployment_name {
 variable region {
     description = "Region for the EKS deployment."
     type = string
-    default = "us-west-2"
+    default = "us-east-1"
 }
 variable aws_profile {
     description = "AWS profile for the deployment."

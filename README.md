@@ -88,7 +88,7 @@ This file will contain any instructional information about this module.
 | <a name="input_kubectl_version"></a> [kubectl\_version](#input\_kubectl\_version) | kubectl version for accessing EKS Cluster | `map` | <pre>{<br>  "1.25": "1.25.9/2023-05-11",<br>  "1.26": "1.26.4/2023-05-11",<br>  "1.27": "1.27.1/2023-04-19"<br>}</pre> | no |
 | <a name="input_private_subnets"></a> [private\_subnets](#input\_private\_subnets) | A list of private subnets CIDR range | `list` | <pre>[<br>  "10.0.0.0/19",<br>  "10.0.32.0/19",<br>  "10.0.64.0/19",<br>  "10.0.96.0/19"<br>]</pre> | no |
 | <a name="input_public_subnets"></a> [public\_subnets](#input\_public\_subnets) | A list of public subnets CIDR range | `list` | <pre>[<br>  "10.0.128.0/20",<br>  "10.0.144.0/20",<br>  "10.0.160.0/20",<br>  "10.0.224.0/19"<br>]</pre> | no |
-| <a name="input_region"></a> [region](#input\_region) | Region for the EKS deployment. | `string` | `"us-west-2"` | no |
+| <a name="input_region"></a> [region](#input\_region) | Region for the EKS deployment. | `string` | `"us-east-1"` | no |
 | <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | The IPv4 CIDR block for the VPC. | `string` | `"10.0.0.0/16"` | no |
 
 ## Outputs
