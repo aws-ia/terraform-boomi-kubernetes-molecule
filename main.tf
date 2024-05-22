@@ -14,6 +14,7 @@ locals {
   tags = {
     Name  = local.name
     Type = "EKS Blueprint Terraform"
+    BoomiContact = "blueprint"
   }
 
   username = "BOOMI_TOKEN.${var.boomi_username}"
@@ -434,6 +435,9 @@ resource "aws_s3_object" "boomi_molecule" {
   depends_on = [module.s3_bucket,data.archive_file.boomi_k8s_molecule]
 }
 
+data "aws_ssm_parameter" "ami" {
+  name = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+}
 
 module "asg" {
   #checkov:skip=CKV_AWS_88: This is Bastion Host which needs Public IP to connect.
@@ -463,7 +467,7 @@ module "asg" {
 
   key_name = "${local.name}-keypair-${var.region}"
 
-  image_id          = var.bastion_ami_id
+  image_id          = data.aws_ssm_parameter.ami.value
   instance_type     = "t3.micro"
   ebs_optimized     = true
   enable_monitoring = true
@@ -609,28 +613,6 @@ resource "null_resource" "boomi_deploy" {
   depends_on = [
     module.eks,module.asg
   ]
-}
-
-resource "null_resource" "boomi_undeploy" {
-  triggers = {
-      profile = var.aws_profile
-      region = var.region
-      autoscaling_group_name = module.asg.autoscaling_group_name
-      deployment_name = var.deployment_name
-      ssh_private_key = tls_private_key.bastion_sshkey.private_key_pem
-      script_location = var.boomi_script_location
-  }
-  provisioner "local-exec" {
-    when       = destroy
-    command = "sh ${self.triggers.script_location}boomi-userdata-scripts/undeploy.sh"
-    environment = {
-      profile = self.triggers.profile
-      region = self.triggers.region
-      autoscaling_group_name = self.triggers.autoscaling_group_name
-      deployment_name = self.triggers.deployment_name
-      ssh_private_key = self.triggers.ssh_private_key
-    }
-  }
 }
 
 

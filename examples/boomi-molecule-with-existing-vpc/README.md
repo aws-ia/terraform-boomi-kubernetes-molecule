@@ -29,7 +29,7 @@ No resources.
 | <a name="input_boomi_install_token"></a> [boomi\_install\_token](#input\_boomi\_install\_token) | n/a | `string` | n/a | yes |
 | <a name="input_boomi_username"></a> [boomi\_username](#input\_boomi\_username) | n/a | `string` | n/a | yes |
 | <a name="input_deployment_name"></a> [deployment\_name](#input\_deployment\_name) | ############## Infra Variables ################# | `string` | `"boomi-eks-blueprint"` | no |
-| <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-west-2"` | no |
+| <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-east-1"` | no |
 
 ## Outputs
 

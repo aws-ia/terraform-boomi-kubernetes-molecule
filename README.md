@@ -57,7 +57,6 @@ This file will contain any instructional information about this module.
 | [aws_secretsmanager_secret_version.eks_blueprint_credentials](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
 | [aws_sqs_queue.dlq](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue) | resource |
 | [null_resource.boomi_deploy](https://registry.terraform.io/providers/hashicorp/null/3.2.2/docs/resources/resource) | resource |
-| [null_resource.boomi_undeploy](https://registry.terraform.io/providers/hashicorp/null/3.2.2/docs/resources/resource) | resource |
 | [random_id.id](https://registry.terraform.io/providers/hashicorp/random/3.6.1/docs/resources/id) | resource |
 | [tls_private_key.bastion_sshkey](https://registry.terraform.io/providers/hashicorp/tls/4.0.5/docs/resources/private_key) | resource |
 | [archive_file.boomi_k8s_molecule](https://registry.terraform.io/providers/hashicorp/archive/2.4.2/docs/data-sources/file) | data source |
@@ -65,18 +64,19 @@ This file will contain any instructional information about this module.
 | [aws_eks_cluster_auth.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth) | data source |
 | [aws_iam_policy_document.lambda_cloudwatchlogs_kms_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_lambda_invocation.boomi_license_validation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/lambda_invocation) | data source |
+| [aws_ssm_parameter.ami](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
 | [aws_subnet.aws_private_subnet_cidr](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | A list of availability zones names | `list` | n/a | yes |
 | <a name="input_aws_profile"></a> [aws\_profile](#input\_aws\_profile) | AWS profile for the deployment. | `string` | n/a | yes |
 | <a name="input_boomi_account_id"></a> [boomi\_account\_id](#input\_boomi\_account\_id) | Boomi Account ID | `string` | n/a | yes |
 | <a name="input_boomi_install_token"></a> [boomi\_install\_token](#input\_boomi\_install\_token) | Boomi AtomSphere API Tokens | `string` | n/a | yes |
 | <a name="input_boomi_username"></a> [boomi\_username](#input\_boomi\_username) | Boomi Username | `string` | n/a | yes |
-| <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | A list of availability zones names | `list` | <pre>[<br>  "us-west-2a",<br>  "us-west-2b",<br>  "us-west-2c",<br>  "us-west-2d"<br>]</pre> | no |
-| <a name="input_bastion_ami_id"></a> [bastion\_ami\_id](#input\_bastion\_ami\_id) | AMI ID for Bastion Host | `string` | `"ami-07dfed28fcf95241c"` | no |
+| <a name="input_region"></a> [region](#input\_region) | Region for the EKS deployment. | `string` | n/a | yes |
 | <a name="input_bastion_remote_access_cidr"></a> [bastion\_remote\_access\_cidr](#input\_bastion\_remote\_access\_cidr) | CIDR Range for bastion Host | `string` | `"0.0.0.0/0"` | no |
 | <a name="input_boomi_script_location"></a> [boomi\_script\_location](#input\_boomi\_script\_location) | Path to Boomi terraform root | `string` | `""` | no |
 | <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | EKS Cluster Version | `string` | `"1.27"` | no |
@@ -88,7 +88,6 @@ This file will contain any instructional information about this module.
 | <a name="input_kubectl_version"></a> [kubectl\_version](#input\_kubectl\_version) | kubectl version for accessing EKS Cluster | `map` | <pre>{<br>  "1.25": "1.25.9/2023-05-11",<br>  "1.26": "1.26.4/2023-05-11",<br>  "1.27": "1.27.1/2023-04-19"<br>}</pre> | no |
 | <a name="input_private_subnets"></a> [private\_subnets](#input\_private\_subnets) | A list of private subnets CIDR range | `list` | <pre>[<br>  "10.0.0.0/19",<br>  "10.0.32.0/19",<br>  "10.0.64.0/19",<br>  "10.0.96.0/19"<br>]</pre> | no |
 | <a name="input_public_subnets"></a> [public\_subnets](#input\_public\_subnets) | A list of public subnets CIDR range | `list` | <pre>[<br>  "10.0.128.0/20",<br>  "10.0.144.0/20",<br>  "10.0.160.0/20",<br>  "10.0.224.0/19"<br>]</pre> | no |
-| <a name="input_region"></a> [region](#input\_region) | Region for the EKS deployment. | `string` | `"us-east-1"` | no |
 | <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | The IPv4 CIDR block for the VPC. | `string` | `"10.0.0.0/16"` | no |
 
 ## Outputs

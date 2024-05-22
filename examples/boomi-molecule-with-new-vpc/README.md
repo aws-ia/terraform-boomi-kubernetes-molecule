@@ -27,8 +27,9 @@ No resources.
 | <a name="input_boomi_account_id"></a> [boomi\_account\_id](#input\_boomi\_account\_id) | n/a | `string` | n/a | yes |
 | <a name="input_boomi_install_token"></a> [boomi\_install\_token](#input\_boomi\_install\_token) | n/a | `string` | n/a | yes |
 | <a name="input_boomi_username"></a> [boomi\_username](#input\_boomi\_username) | n/a | `string` | n/a | yes |
+| <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | A list of availability zones names | `list` | <pre>[<br>  "us-east-2a",<br>  "us-east-2b",<br>  "us-east-2c"<br>]</pre> | no |
 | <a name="input_deploymentName"></a> [deploymentName](#input\_deploymentName) | ############## Infra Variables ################# | `string` | `"boomi-eks-blueprint"` | no |
-| <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-west-2"` | no |
+| <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-east-2"` | no |
 
 ## Outputs
 

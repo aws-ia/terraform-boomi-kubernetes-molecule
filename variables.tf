@@ -7,7 +7,6 @@ variable deployment_name {
 variable region {
     description = "Region for the EKS deployment."
     type = string
-    default = "us-east-1"
 }
 variable aws_profile {
     description = "AWS profile for the deployment."
@@ -23,7 +22,6 @@ variable vpc_cidr {
 variable availability_zones {
     description = "A list of availability zones names"
     type = list
-    default = ["us-west-2a", "us-west-2b", "us-west-2c","us-west-2d"]
 }
 
 variable private_subnets {
@@ -36,12 +34,6 @@ variable public_subnets {
     description = "A list of public subnets CIDR range"
     type = list
     default = ["10.0.128.0/20","10.0.144.0/20","10.0.160.0/20","10.0.224.0/19"]
-}
-
-variable bastion_ami_id {
-    description = "AMI ID for Bastion Host"
-    type = string
-    default = "ami-07dfed28fcf95241c"
 }
 
 variable bastion_remote_access_cidr{
