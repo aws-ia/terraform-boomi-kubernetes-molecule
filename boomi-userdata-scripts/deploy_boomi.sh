@@ -1,12 +1,13 @@
 #!/bin/bash
 deployment_name=$1
 region=$2
-account_id=$(aws secretsmanager get-secret-value  --secret-id $deployment_name-eks-blueprint-v1| jq --raw-output '.SecretString' | jq -r .boomi_account_id)
-boomi_username=$(aws secretsmanager get-secret-value  --secret-id $deployment_name-eks-blueprint-v1| jq --raw-output '.SecretString' | jq -r .boomi_username)
-efs_driver_role_arn=$(aws secretsmanager get-secret-value  --secret-id $deployment_name-eks-blueprint-v1| jq --raw-output '.SecretString' | jq -r .efs_driver_role_arn)
-efs_id=$(aws secretsmanager get-secret-value  --secret-id $deployment_name-eks-blueprint-v1| jq --raw-output '.SecretString' | jq -r .efs_id)
-install_token=$(aws secretsmanager get-secret-value  --secret-id $deployment_name-eks-blueprint-v1| jq --raw-output '.SecretString' | jq -r .install_token)
-s3_bucket_name=$(aws secretsmanager get-secret-value  --secret-id $deployment_name-eks-blueprint-v1| jq --raw-output '.SecretString' | jq -r .s3_bucket_name)
+
+account_id=$(aws secretsmanager get-secret-value --region $region --secret-id $deployment_name-eks-blueprint| jq --raw-output '.SecretString' | jq -r .boomi_account_id)
+boomi_username=$(aws secretsmanager get-secret-value  --region $region --secret-id $deployment_name-eks-blueprint| jq --raw-output '.SecretString' | jq -r .boomi_username)
+efs_driver_role_arn=$(aws secretsmanager get-secret-value --region $region  --secret-id $deployment_name-eks-blueprint| jq --raw-output '.SecretString' | jq -r .efs_driver_role_arn)
+efs_id=$(aws secretsmanager get-secret-value --region $region --secret-id $deployment_name-eks-blueprint| jq --raw-output '.SecretString' | jq -r .efs_id)
+install_token=$(aws secretsmanager get-secret-value --region $region --secret-id $deployment_name-eks-blueprint| jq --raw-output '.SecretString' | jq -r .install_token)
+s3_bucket_name=$(aws secretsmanager get-secret-value --region $region --secret-id $deployment_name-eks-blueprint| jq --raw-output '.SecretString' | jq -r .s3_bucket_name)
 
 aws eks update-kubeconfig --region $region --name $deployment_name
 aws eks create-addon --cluster-name $deployment_name --region $region --addon-name aws-efs-csi-driver --service-account-role-arn $efs_driver_role_arn

@@ -83,7 +83,7 @@ module "lambda_function" {
   #checkov:skip=CKV_AWS_158: Added KMS key for cloudwatch log
   source = "terraform-aws-modules/lambda/aws"
   version = "6.5.0"
-  function_name = "boomi_license_validation"
+  function_name = "${local.name}-boomi_license_validation"
   description   = "Verifies account has available molecule licenses"
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.9"
@@ -97,17 +97,16 @@ module "lambda_function" {
   vpc_subnet_ids = local.private_subnet_ids
   attach_dead_letter_policy = true
   dead_letter_target_arn    = aws_sqs_queue.dlq.arn
-
 }
 
 resource "aws_sqs_queue" "dlq" {
-  name = "boomi_license_validation-dlq"
+  name = "${local.name}-boomi_license_validation-dlq"
   kms_master_key_id                 = aws_kms_key.lambda_kms_key.arn
   kms_data_key_reuse_period_seconds = 300
 }
 
 data "aws_lambda_invocation" "boomi_license_validation" {
-  function_name = "boomi_license_validation"
+  function_name = "${local.name}-boomi_license_validation"
   depends_on = [module.lambda_function]
   input = <<JSON
   {
@@ -304,7 +303,7 @@ module "efs" {
 module "bastion_sg" {
   source = "terraform-aws-modules/security-group/aws"
   version = "~> 5.1.0"
-  name        = "eks-blueprint-bastion-sg"
+  name        = "${local.name}-eks-blueprint-bastion-sg"
   description = "Security group for Bastion Host - EKS Blueprint"
   vpc_id      = var.create_new_vpc ? module.vpc.vpc_id : var.existing_vpc_id
   #checkov:skip=CKV_AWS_24:User will provide their own cidr
@@ -340,7 +339,7 @@ module "bastion_sg" {
 }
 
 resource "aws_iam_policy" "bastion_host_policy" {
-  name        = "bastion_host_policy"
+  name        = "${local.name}-bastion_host_policy"
   description = "IAM Policy for Bastion Host EKS access"
 
   policy = jsonencode({
@@ -445,7 +444,7 @@ module "asg" {
   source  = "terraform-aws-modules/autoscaling/aws"
   version = "~>7.3.1"
   # Autoscaling group
-  name = "BastionHost-for-eks-blueprint"
+  name = "${local.name}-BastionHost-for-eks-blueprint"
 
   create                 = true 
   create_launch_template = true
@@ -476,7 +475,7 @@ module "asg" {
 
   # IAM role & instance profile
   create_iam_instance_profile = true
-  iam_role_name               = "Bastion-Role"
+  iam_role_name               = "${local.name}-Bastion-Role"
   iam_role_description        = "Bastion Role to access EKS"
   iam_role_policies = {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
@@ -575,7 +574,7 @@ module "vpc" {
 
 #tfsec:ignore:aws-ssm-secret-use-customer-key
 resource "aws_secretsmanager_secret" "eks_blueprint_secret" {
-  name = "${local.name}-eks-blueprint-v1"
+  name = "${local.name}-eks-blueprint"
   recovery_window_in_days = 0
   kms_key_id = aws_kms_key.lambda_kms_key.arn
 }
@@ -613,6 +612,27 @@ resource "null_resource" "boomi_deploy" {
   depends_on = [
     module.eks,module.asg
   ]
+}
+resource "null_resource" "boomi_undeploy" {
+  triggers = {
+      profile = var.aws_profile
+      region = var.region
+      autoscaling_group_name = module.asg.autoscaling_group_name
+      deployment_name = var.deployment_name
+      ssh_private_key = tls_private_key.bastion_sshkey.private_key_pem
+      script_location = var.boomi_script_location
+  }
+  provisioner "local-exec" {
+    when       = destroy
+    command = "sh ${self.triggers.script_location}boomi-userdata-scripts/undeploy.sh"
+    environment = {
+      profile = self.triggers.profile
+      region = self.triggers.region
+      autoscaling_group_name = self.triggers.autoscaling_group_name
+      deployment_name = self.triggers.deployment_name
+      ssh_private_key = self.triggers.ssh_private_key
+    }
+  }
 }
 
 

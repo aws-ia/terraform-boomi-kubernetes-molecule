@@ -1,7 +1,8 @@
 ############### Infra Variables #################
-variable deploymentName {
+variable deployment_name {
+    description = "Deployment Name for the boomi terraform deployment."
     type = string
-    default = "boomi-eks-blueprint"
+    default = "boomi-eks-blueprint-09713"
 }
 variable region {
     type = string

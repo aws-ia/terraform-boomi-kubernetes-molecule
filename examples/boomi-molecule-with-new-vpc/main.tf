@@ -14,7 +14,7 @@ module boomi-eks-molecule {
     boomi_account_id = var.boomi_account_id
     boomi_install_token = var.boomi_install_token
     region = var.region
-    deployment_name = var.deploymentName
+    deployment_name = var.deployment_name
 
     existing_vpc_id = ""
     existing_private_subnets_ids = []

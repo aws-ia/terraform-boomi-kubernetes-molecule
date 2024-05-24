@@ -3,6 +3,14 @@
 # Install Git
 #sudo yum update -y
 #sudo yum install git -y
+sudo yum install jq -y
+
+# Installing aws cli v2
+sudo yum remove awscli -y
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+export PATH=$HOME/.local/bin:$PATH
 
 # Install helm
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
