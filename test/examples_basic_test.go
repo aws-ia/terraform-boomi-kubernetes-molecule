@@ -16,12 +16,10 @@ func configureTerraformOptions(t *testing.T, terraformDir string, tfModule strin
 func TestExamplesBasic(t *testing.T) {
 
 	terraformApplyOptions := configureTerraformOptions(t, "../examples/boomi-molecule-with-new-vpc", "module.boomi-eks-molecule")
-	terraformApplyDeployOptions := configureTerraformOptions(t, "../examples/boomi-molecule-with-new-vpc", "module.boomi-eks-molecule.null_resource.boomi_deploy")
 	terraformOptionsDestroyDeployOptions := configureTerraformOptions(t, "../examples/boomi-molecule-with-new-vpc", "module.boomi-eks-molecule.null_resource.boomi_undeploy")
 	terraformOptionsDestroyOptions := configureTerraformOptions(t, "../examples/boomi-molecule-with-new-vpc", "module.boomi-eks-molecule")
 		
 	defer terraform.Destroy(t, terraformOptionsDestroyOptions)
 	defer terraform.Destroy(t, terraformOptionsDestroyDeployOptions)
 	terraform.InitAndApply(t, terraformApplyOptions)
-	terraform.InitAndApply(t, terraformApplyDeployOptions)
 }
