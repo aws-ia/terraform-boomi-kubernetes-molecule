@@ -2,7 +2,7 @@
 variable deployment_name {
     description = "Deployment Name for the boomi terraform deployment."
     type = string
-    default = "boomi-eks-blueprint-013"
+    default = "boomi-eks-blueprint-023"
 }
 variable region {
     type = string

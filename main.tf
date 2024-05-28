@@ -633,6 +633,9 @@ resource "null_resource" "boomi_undeploy" {
       ssh_private_key = self.triggers.ssh_private_key
     }
   }
+  depends_on = [
+    module.eks,module.asg
+  ]
 }
 
 
