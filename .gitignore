@@ -2,6 +2,7 @@ build/
 plan.out
 plan.out.json
 
+.DS_Store
 # Local .terraform directories
 **/.terraform/*
 
@@ -40,3 +41,7 @@ terraform.rc
 
 go.mod
 go.sum
+
+# Ignore build in examples
+
+examples/**/builds/*.*

@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: molecule
+  labels:
+    app: molecule
+spec:
+  selector:
+    matchLabels:
+      app: molecule
+  serviceName: molecule-service
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: molecule
+    spec:
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: molecule-storage
+          persistentVolumeClaim:
+            claimName: molecule-storage
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - image: boomi/molecule:4.2.0
+          imagePullPolicy: Always
+          name: atom-node
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+            - containerPort: 9093
+              protocol: TCP
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - /home/boomi/scaledown.sh
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 4000Mi
+            requests:
+              cpu: 2000m
+              memory: 4000Mi
+          volumeMounts:
+            - name: molecule-storage
+              mountPath: /mnt/boomi
+          readinessProbe:
+            periodSeconds: 10
+            initialDelaySeconds: 10
+            httpGet:
+              path: /_admin/readiness
+              port: 9090
+          livenessProbe:
+            periodSeconds: 60
+            httpGet:
+              path: /_admin/liveness
+              port: 9090
+          env:
+            - name: BOOMI_ATOMNAME
+              value: {{ .Values.MoleculeClusterName }}
+            - name: ATOM_LOCALHOSTID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: BOOMI_ACCOUNTID
+              valueFrom:
+                secretKeyRef:
+                  name: boomi-secret
+                  key: account
+            - name: INSTALL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: boomi-secret
+                  key: token
+            - name: CONTAINER_PROPERTIES_OVERRIDES
+              value: com.boomi.container.debug=true

@@ -1,0 +1,9 @@
+InstallTokenProvided: true
+ApplicationLoadBalancer: true
+MoleculeClusterName:
+boomi_username:
+boomi_password:
+boomi_account_id: 
+boomi_mfa_install_token:
+efs_id: 
+base_path:
