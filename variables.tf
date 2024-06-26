@@ -70,11 +70,11 @@ variable existing_public_subnets_ids {
 
 variable cluster_version {
     type = string
-    default = "1.27"
+    default = "1.28"
     description = "EKS Cluster Version"
     validation {
-        condition     = contains(["1.25", "1.26","1.27"], var.cluster_version)
-        error_message = "Valid values for var: cluster_version are (1.25, 1.26,1.27)."
+        condition     = contains(["1.28", "1.29","1.30"], var.cluster_version)
+        error_message = "Valid values for var: cluster_version are (1.28, 1.29,1.30)."
     } 
 }
 
@@ -82,9 +82,9 @@ variable "kubectl_version" {
   type = map
   description = "kubectl version for accessing EKS Cluster"
   default = {
-    1.25 = "1.25.9/2023-05-11"
-    1.26 = "1.26.4/2023-05-11"
-    1.27 = "1.27.1/2023-04-19"
+    1.28 = "1.28.8/2024-04-19"
+    1.29 = "1.29.3/2024-04-19"
+    1.30 = "1.30.0/2024-05-12"
   }
 }
 
