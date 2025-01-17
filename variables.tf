@@ -103,7 +103,7 @@ variable boomi_install_token {
     type = string
 }
 variable boomi_script_location {
-    description = "Path to Boomi terraform root"
+    description = "Path to Boomi terraform root. Default value .terraform/modules/kubernetes-molecule/"
     type = string
     default = ""
 }
