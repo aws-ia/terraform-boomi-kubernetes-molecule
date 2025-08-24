@@ -73,13 +73,13 @@
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | A list of availability zones names | `list` | <pre>[<br>  "us-east-2a",<br>  "us-east-2b",<br>  "us-east-2c"<br>]</pre> | no |
 | <a name="input_bastion_remote_access_cidr"></a> [bastion\_remote\_access\_cidr](#input\_bastion\_remote\_access\_cidr) | CIDR Range for bastion Host | `string` | `"0.0.0.0/0"` | no |
 | <a name="input_boomi_script_location"></a> [boomi\_script\_location](#input\_boomi\_script\_location) | Path to Boomi terraform root. Default value .terraform/modules/kubernetes-molecule/ | `string` | `""` | no |
-| <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | EKS Cluster Version | `string` | `"1.27"` | no |
+| <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | EKS Cluster Version | `string` | `"1.28"` | no |
 | <a name="input_create_new_vpc"></a> [create\_new\_vpc](#input\_create\_new\_vpc) | If set to true, will create new VPC. If set to false, the existing provided vpc is used | `bool` | `true` | no |
 | <a name="input_deployment_name"></a> [deployment\_name](#input\_deployment\_name) | Deployment Name for the boomi terraform deployment. | `string` | `"boomi-eks-blueprint"` | no |
 | <a name="input_existing_private_subnets_ids"></a> [existing\_private\_subnets\_ids](#input\_existing\_private\_subnets\_ids) | List of private subnet ids | `list` | `[]` | no |
 | <a name="input_existing_public_subnets_ids"></a> [existing\_public\_subnets\_ids](#input\_existing\_public\_subnets\_ids) | List of public subnet ids | `list` | `[]` | no |
 | <a name="input_existing_vpc_id"></a> [existing\_vpc\_id](#input\_existing\_vpc\_id) | VPC ID for existing VPC | `string` | `""` | no |
-| <a name="input_kubectl_version"></a> [kubectl\_version](#input\_kubectl\_version) | kubectl version for accessing EKS Cluster | `map` | <pre>{<br>  "1.25": "1.25.9/2023-05-11",<br>  "1.26": "1.26.4/2023-05-11",<br>  "1.27": "1.27.1/2023-04-19"<br>}</pre> | no |
+| <a name="input_kubectl_version"></a> [kubectl\_version](#input\_kubectl\_version) | kubectl version for accessing EKS Cluster | `map` | <pre>{<br>  "1.28": "1.28.8/2024-04-19",<br>  "1.29": "1.29.3/2024-04-19",<br>  "1.3": "1.30.0/2024-05-12"<br>}</pre> | no |
 | <a name="input_private_subnets"></a> [private\_subnets](#input\_private\_subnets) | A list of private subnets CIDR range | `list` | <pre>[<br>  "10.0.0.0/19",<br>  "10.0.32.0/19",<br>  "10.0.64.0/19"<br>]</pre> | no |
 | <a name="input_public_subnets"></a> [public\_subnets](#input\_public\_subnets) | A list of public subnets CIDR range | `list` | <pre>[<br>  "10.0.128.0/20",<br>  "10.0.144.0/20",<br>  "10.0.160.0/20"<br>]</pre> | no |
 | <a name="input_region"></a> [region](#input\_region) | Region for the EKS deployment. | `string` | `"us-east-2"` | no |
